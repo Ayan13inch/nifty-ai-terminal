@@ -1,9 +1,7 @@
 flask
 flask-cors
-flask-socketio
-eventlet
-requests
+pandas
 yfinance
 ta
-pandas
 gunicorn
+requests

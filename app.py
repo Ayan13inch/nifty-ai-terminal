@@ -1,76 +1,33 @@
-# app.py
-
 from flask import Flask, jsonify
 from flask_cors import CORS
-from flask_socketio import SocketIO, emit
-import requests
 import yfinance as yf
 import ta
-import pandas as pd
+import requests
 import os
 
-# ────────────────────────────────────────────────────────────
-# FLASK SETUP
-# ────────────────────────────────────────────────────────────
+# ─────────────────────────────────────────────
+# APP SETUP
+# ─────────────────────────────────────────────
 app = Flask(__name__)
 
 CORS(app)
 
-socketio = SocketIO(
-    app,
-    cors_allowed_origins="*",
-    ping_timeout=10,
-    ping_interval=5,
-    async_mode='eventlet'
-)
-
-SECRET_TOKEN = "my-secret-token-12345"
-
-# ────────────────────────────────────────────────────────────
-# SOCKET AUTH
-# ────────────────────────────────────────────────────────────
-@socketio.on('connect')
-def handle_connect(auth):
-
-    if auth and auth.get('token') == SECRET_TOKEN:
-
-        print("✅ Client authenticated")
-
-        emit(
-            'status',
-            {'status': 'authenticated'}
-        )
-
-    else:
-
-        print("❌ Authentication failed")
-
-        return False
-
-
-@socketio.on('disconnect')
-def handle_disconnect():
-
-    print("Client disconnected")
-
-
-# ────────────────────────────────────────────────────────────
-# TELEGRAM ALERTS
-# ────────────────────────────────────────────────────────────
+# ─────────────────────────────────────────────
+# TELEGRAM
+# ─────────────────────────────────────────────
 BOT_TOKEN = os.getenv(
     "TELEGRAM_BOT_TOKEN",
-    "YOUR_BOT_TOKEN"
+    ""
 )
 
 CHAT_ID = os.getenv(
     "TELEGRAM_CHAT_ID",
-    "YOUR_CHAT_ID"
+    ""
 )
-
 
 def send_telegram(msg):
 
-    if BOT_TOKEN == "YOUR_BOT_TOKEN":
+    if not BOT_TOKEN or not CHAT_ID:
         return
 
     try:
@@ -92,10 +49,9 @@ def send_telegram(msg):
     except:
         pass
 
-
-# ────────────────────────────────────────────────────────────
-# NIFTY STOCKS
-# ────────────────────────────────────────────────────────────
+# ─────────────────────────────────────────────
+# STOCKS
+# ─────────────────────────────────────────────
 def get_nifty50_stocks():
 
     return [
@@ -117,10 +73,9 @@ def get_nifty50_stocks():
         "MARUTI"
     ]
 
-
-# ────────────────────────────────────────────────────────────
+# ─────────────────────────────────────────────
 # INDICATORS
-# ────────────────────────────────────────────────────────────
+# ─────────────────────────────────────────────
 def compute_indicators(df):
 
     close = df["Close"]
@@ -150,10 +105,9 @@ def compute_indicators(df):
 
     return df
 
-
-# ────────────────────────────────────────────────────────────
-# SIGNAL GENERATION
-# ────────────────────────────────────────────────────────────
+# ─────────────────────────────────────────────
+# SIGNAL LOGIC
+# ─────────────────────────────────────────────
 def generate_signal(df):
 
     df = compute_indicators(df)
@@ -167,13 +121,11 @@ def generate_signal(df):
     if last["ema9"] > last["ema21"]:
 
         score += 1
-
         reasons.append("EMA Bullish")
 
     if 40 < last["rsi"] < 70:
 
         score += 1
-
         reasons.append(
             f"RSI Healthy ({last['rsi']:.1f})"
         )
@@ -181,13 +133,11 @@ def generate_signal(df):
     if last["macd_hist"] > 0:
 
         score += 1
-
         reasons.append("MACD Positive")
 
     if last["bb_pct"] < 0.8:
 
         score += 1
-
         reasons.append("Below BB Upper Band")
 
     signal = (
@@ -218,10 +168,9 @@ def generate_signal(df):
         reasons
     )
 
-
-# ────────────────────────────────────────────────────────────
-# STOCK SCANNER
-# ────────────────────────────────────────────────────────────
+# ─────────────────────────────────────────────
+# SCANNER
+# ─────────────────────────────────────────────
 def scan_stocks():
 
     symbols = get_nifty50_stocks()
@@ -278,9 +227,7 @@ def scan_stocks():
 
                 "indicators": indicators,
 
-                "reasons": reasons,
-
-                "empty": False
+                "reasons": reasons
             })
 
         except Exception as e:
@@ -289,35 +236,21 @@ def scan_stocks():
                 f"Error scanning {symbol}: {e}"
             )
 
-            continue
+    return results
 
-    while len(results) < 10:
+# ─────────────────────────────────────────────
+# SCAN API
+# ─────────────────────────────────────────────
+@app.route("/scan")
+def scan():
 
-        results.append({
+    return jsonify(
+        scan_stocks()
+    )
 
-            "stock": "—",
-
-            "price": 0,
-
-            "signal": "HOLD",
-
-            "confidence": 0,
-
-            "ai_score": 0,
-
-            "indicators": {},
-
-            "reasons": [],
-
-            "empty": True
-        })
-
-    return results[:10]
-
-
-# ────────────────────────────────────────────────────────────
-# RECOMMENDATION ENGINE
-# ────────────────────────────────────────────────────────────
+# ─────────────────────────────────────────────
+# RECOMMENDATION API
+# ─────────────────────────────────────────────
 @app.route("/recommend/<int:amount>")
 def recommend(amount):
 
@@ -328,8 +261,6 @@ def recommend(amount):
         s for s in stocks
 
         if s["signal"] == "BUY"
-
-        and not s["empty"]
     ]
 
     buy_stocks = sorted(
@@ -339,7 +270,7 @@ def recommend(amount):
         key=lambda x: x["ai_score"],
 
         reverse=True
-    )
+    )[:5]
 
     if not buy_stocks:
 
@@ -354,37 +285,18 @@ def recommend(amount):
             "recommendations": []
         })
 
-    total_score = sum(
-        s["ai_score"]
-        for s in buy_stocks
-    )
+    allocation = amount / len(buy_stocks)
 
     recommendations = []
 
     total_invested = 0
 
-    remaining = amount
-
-    for stock in buy_stocks[:5]:
-
-        allocation = (
-            stock["ai_score"]
-            /
-            total_score
-        )
-
-        allocated_capital = (
-            amount * allocation
-        )
+    for stock in buy_stocks:
 
         qty = int(
-            allocated_capital
-            //
+            allocation //
             stock["price"]
         )
-
-        if qty <= 0:
-            continue
 
         invested = round(
             qty * stock["price"],
@@ -393,19 +305,8 @@ def recommend(amount):
 
         total_invested += invested
 
-        remaining -= invested
-
-        target_pct = round(
-            4 + (
-                stock["confidence"] / 50
-            ),
-            1
-        )
-
         target_price = round(
-            stock["price"]
-            *
-            (1 + target_pct / 100),
+            stock["price"] * 1.05,
             2
         )
 
@@ -423,15 +324,6 @@ def recommend(amount):
             2
         )
 
-        holding_type = (
-
-            "Swing Trade"
-
-            if stock["confidence"] >= 75
-
-            else "Quick Momentum"
-        )
-
         recommendations.append({
 
             "stock": stock["stock"],
@@ -444,17 +336,11 @@ def recommend(amount):
 
             "confidence": stock["confidence"],
 
-            "ai_score": stock["ai_score"],
-
             "target_price": target_price,
 
             "stop_loss": stop_loss,
 
-            "estimated_profit": estimated_profit,
-
-            "target_pct": target_pct,
-
-            "holding_type": holding_type
+            "estimated_profit": estimated_profit
         })
 
     return jsonify({
@@ -467,69 +353,30 @@ def recommend(amount):
         ),
 
         "remaining": round(
-            remaining,
+            amount - total_invested,
             2
         ),
 
         "recommendations": recommendations
     })
 
-
-# ────────────────────────────────────────────────────────────
-# SOCKET EVENT
-# ────────────────────────────────────────────────────────────
-@socketio.on('manual_scan')
-def handle_scan():
-
-    results = scan_stocks()
-
-    emit(
-        'scan_update',
-        results,
-        broadcast=True
-    )
-
-
-# ────────────────────────────────────────────────────────────
-# ROUTES
-# ────────────────────────────────────────────────────────────
-@app.route("/scan")
-def scan():
-
-    return jsonify(
-        scan_stocks()
-    )
-
-
+# ─────────────────────────────────────────────
+# HEALTH
+# ─────────────────────────────────────────────
 @app.route("/health")
 def health():
 
     return jsonify({
 
-        "status": "ok",
-
-        "socket": "active"
+        "status": "ok"
     })
 
-
-# ────────────────────────────────────────────────────────────
-# START SERVER
-# ────────────────────────────────────────────────────────────
+# ─────────────────────────────────────────────
+# START
+# ─────────────────────────────────────────────
 if __name__ == "__main__":
 
-    print(
-        "🚀 Starting Flask + Socket.IO Server..."
-    )
-
-    socketio.run(
-
-        app,
-
-        host='0.0.0.0',
-
-        port=5000,
-
-        debug=True,
-
-        allow_unsafe_werkzeug=True
+    app.run(
+        host="0.0.0.0",
+        port=5000
     )
