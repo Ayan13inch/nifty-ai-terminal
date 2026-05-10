@@ -269,10 +269,24 @@ def refresh_cache():
 
 def background_refresher():
     while True:
+        time.sleep(300)  # wait 5 min, then refresh
         refresh_cache()
-        time.sleep(300)  # Refresh every 5 minutes
+
+# ─── Startup — works with BOTH gunicorn and python app.py ────────────────────
+# Runs at import time so gunicorn picks it up correctly.
+
+def _startup():
+    print("Starting initial data load in background...")
+    threading.Thread(target=refresh_cache, daemon=True).start()
+    threading.Thread(target=background_refresher, daemon=True).start()
+
+_startup()
 
 # ─── API Endpoints ────────────────────────────────────────────────────────────
+
+@app.route("/")
+def index():
+    return jsonify({"message": "N50 Nexus API running. Visit /api/status"})
 
 @app.route("/api/status")
 def status():
@@ -396,17 +410,5 @@ def single_stock(symbol):
 # ─── Entry Point ─────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
-    print("=" * 60)
-    print("  NIFTY 50 LIVE SCANNER  — Starting up")
-    print("=" * 60)
-    print("Pre-loading stock data (this may take ~60 seconds)...")
-
-    # Initial load in main thread so API is ready when server starts
-    refresh_cache()
-
-    # Background refresh every 5 minutes
-    t = threading.Thread(target=background_refresher, daemon=True)
-    t.start()
-
     print("Server running on http://localhost:5000")
     app.run(debug=False, port=5000, threaded=True)
