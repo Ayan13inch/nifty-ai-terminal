@@ -1,0 +1,9 @@
+flask
+flask-cors
+flask-socketio
+eventlet
+requests
+yfinance
+ta
+pandas
+gunicorn
