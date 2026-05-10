@@ -9,11 +9,24 @@
 
   <style>
     :root {
-      --bg: #020508; --bg2: #060d12; --bg3: #0a1520;
-      --green: #00ff88; --green2: #00cc66; --cyan: #00d4ff;
-      --red: #ff3366; --yellow: #f0c040; --text: #c8dde8;
-      --text-dim: #4a6878; --border: rgba(0,212,255,0.15);
-      --card-bg: rgba(6,20,30,0.85);
+      --bg:        #020508;
+      --bg2:       #060d12;
+      --bg3:       #0a1520;
+      --green:     #00ff88;
+      --green2:    #00cc66;
+      --cyan:      #00d4ff;
+      --cyan2:     #0099cc;
+      --red:       #ff3366;
+      --red2:      #cc2244;
+      --yellow:    #f0c040;
+      --text:      #c8dde8;
+      --text-dim:  #4a6878;
+      --border:    rgba(0,212,255,0.15);
+      --border2:   rgba(0,255,136,0.2);
+      --glow-g:    0 0 20px rgba(0,255,136,0.4);
+      --glow-c:    0 0 20px rgba(0,212,255,0.4);
+      --glow-r:    0 0 20px rgba(255,51,102,0.4);
+      --card-bg:   rgba(6,20,30,0.85);
       --font-head: 'Orbitron', sans-serif;
       --font-mono: 'Share Tech Mono', monospace;
       --font-body: 'Rajdhani', sans-serif;
@@ -21,15 +34,94 @@
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html { scroll-behavior: smooth; }
+
     body {
-      background: var(--bg); color: var(--text);
-      font-family: var(--font-body); font-size: 16px;
-      overflow-x: hidden; min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 16px;
+      overflow-x: hidden;
+      min-height: 100vh;
     }
 
-    /* === Your existing CSS (kept minimal for brevity) === */
-    .scanlines, .ticker-wrap, .header, .section, .budget-section, .portfolio-section, .table-wrap { /* ... your full CSS ... */ }
-    /* Paste your full original CSS here if needed */
+    .scanlines {
+      position: fixed; inset: 0; z-index: 1;
+      background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.07) 2px, rgba(0,0,0,0.07) 4px);
+      pointer-events: none;
+    }
+
+    .ticker-wrap {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      height: 36px; background: rgba(0,10,18,0.95);
+      border-bottom: 1px solid var(--cyan2);
+      display: flex; align-items: center; overflow: hidden;
+    }
+    .ticker-label {
+      flex-shrink: 0; background: var(--cyan); color: #000;
+      font-family: var(--font-head); font-size: 10px; font-weight: 700;
+      padding: 0 14px; height: 100%; display: flex; align-items: center;
+      letter-spacing: 2px;
+    }
+    .ticker-track { flex: 1; overflow: hidden; }
+    .ticker-inner {
+      display: flex; gap: 48px; white-space: nowrap;
+      font-family: var(--font-mono); font-size: 12px;
+      animation: tickerScroll 60s linear infinite;
+    }
+    @keyframes tickerScroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+
+    .main-wrapper { position: relative; z-index: 2; padding-top: 36px; }
+
+    .header {
+      padding: 48px 60px 32px;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .logo-name {
+      font-family: var(--font-head); font-size: 36px; font-weight: 900;
+      letter-spacing: 8px; color: var(--cyan);
+      text-shadow: 0 0 30px rgba(0,212,255,0.6);
+    }
+    .logo-tag { font-family: var(--font-mono); font-size: 11px; color: var(--green); letter-spacing: 4px; }
+
+    .section { padding: 40px 60px; }
+    .section-title {
+      font-family: var(--font-head); font-size: 13px; font-weight: 700;
+      letter-spacing: 4px; color: var(--cyan);
+    }
+    .section-title::before { content: '▶ '; color: var(--green); }
+
+    .top5-grid {
+      display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px;
+    }
+    .stock-card {
+      background: var(--card-bg); border: 1px solid var(--border);
+      padding: 22px 20px; transition: all 0.3s;
+      cursor: pointer;
+    }
+    .stock-card:hover {
+      transform: translateY(-6px);
+      border-color: var(--cyan);
+      box-shadow: var(--glow-c);
+    }
+
+    .budget-section {
+      background: linear-gradient(135deg, rgba(0,25,40,0.9), rgba(0,10,20,0.9));
+      border: 1px solid var(--border2); border-left: 3px solid var(--green);
+      padding: 40px 60px;
+    }
+
+    .portfolio-section { display: none; padding: 0 60px 40px; }
+    .portfolio-section.visible { display: block; }
+
+    .stocks-table {
+      width: 100%; border-collapse: collapse; font-family: var(--font-mono); font-size: 13px;
+    }
+    .stocks-table th {
+      background: rgba(0,15,25,0.95); padding: 12px 16px;
+      font-family: var(--font-head); font-size: 9px; letter-spacing: 3px; color: var(--cyan);
+    }
+    .stocks-table td { padding: 12px 16px; border-bottom: 1px solid rgba(0,212,255,0.05); }
 
     footer {
       padding: 24px 60px;
@@ -38,8 +130,9 @@
       justify-content: space-between;
       align-items: center;
       flex-wrap: wrap;
-      gap: 15px;
+      gap: 20px;
       font-size: 11px;
+      color: var(--text-dim);
     }
   </style>
 </head>
@@ -47,29 +140,24 @@
 
 <div class="scanlines"></div>
 
-<!-- Ticker Tape -->
+<!-- Ticker -->
 <div class="ticker-wrap">
   <div class="ticker-label">NSE LIVE</div>
   <div class="ticker-track">
-    <div class="ticker-inner" id="tickerInner">
-      <span class="tick-item"><span class="tick-sym">LOADING...</span></span>
-    </div>
+    <div class="ticker-inner" id="tickerInner">LOADING MARKET DATA...</div>
   </div>
 </div>
 
 <div class="main-wrapper">
 
-  <!-- Header -->
   <header class="header">
-    <div class="logo-block">
+    <div>
       <div class="logo-name">N50 NEXUS</div>
       <div class="logo-tag">NIFTY 50 LIVE INTELLIGENCE TERMINAL</div>
     </div>
-    <div class="header-meta">
-      <div class="live-indicator">
-        <div class="live-dot"></div>
-        <span id="liveStatus">LIVE</span>
-      </div>
+    <div class="live-indicator">
+      <div class="live-dot"></div>
+      <span id="liveStatus">LIVE FEED ACTIVE</span>
     </div>
   </header>
 
@@ -82,7 +170,7 @@
     <div class="top5-grid" id="top5Grid"></div>
   </section>
 
-  <!-- Budget Engine -->
+  <!-- Portfolio Engine -->
   <div class="budget-section">
     <div class="budget-layout">
       <div class="budget-input-group">
@@ -116,13 +204,13 @@
     </div>
   </div>
 
-  <!-- All Stocks -->
+  <!-- Live Scan Table -->
   <div class="section">
     <div class="section-header">
       <div class="section-title">NIFTY 50 LIVE SCAN</div>
       <input type="text" id="searchInput" placeholder="Search symbol or name..." 
-        style="background:rgba(0,0,0,0.5);border:1px solid var(--border);padding:8px 16px;color:var(--text);font-family:var(--font-mono);font-size:12px;outline:none;width:280px;"
-        oninput="filterTable()" />
+             style="background:rgba(0,0,0,0.5);border:1px solid var(--border);padding:8px 16px;color:var(--text);font-family:var(--font-mono);font-size:12px;outline:none;width:280px;"
+             oninput="filterTable()" />
     </div>
     <div class="table-wrap">
       <table class="stocks-table" id="stocksTable">
@@ -147,16 +235,12 @@
   </div>
 
   <footer>
-    <div>
-      ⚠ FOR EDUCATIONAL PURPOSES ONLY. NOT FINANCIAL ADVICE.
-    </div>
-    <div style="text-align:center; font-size:10px; opacity:0.7;">
+    <div>⚠ FOR EDUCATIONAL PURPOSES ONLY. NOT FINANCIAL ADVICE.</div>
+    <div style="text-align:center;">
       Created by <strong>Ayan Bhowmick</strong><br>
-      <a href="mailto:ayaandeep9051@gmail.com" style="color:var(--cyan); text-decoration:none;">ayaandeep9051@gmail.com</a>
+      <a href="mailto:ayaandeep9051@gmail.com" style="color:var(--cyan);">ayaandeep9051@gmail.com</a>
     </div>
-    <div>
-      DATA VIA YAHOO FINANCE • REFRESHES EVERY 5 MIN
-    </div>
+    <div>DATA VIA YAHOO FINANCE • REFRESHES EVERY 5 MIN</div>
   </footer>
 </div>
 
