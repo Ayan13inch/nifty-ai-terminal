@@ -9,130 +9,174 @@
 
   <style>
     :root {
-      --bg:        #020508;
-      --bg2:       #060d12;
-      --bg3:       #0a1520;
-      --green:     #00ff88;
-      --green2:    #00cc66;
-      --cyan:      #00d4ff;
-      --cyan2:     #0099cc;
-      --red:       #ff3366;
-      --red2:      #cc2244;
-      --yellow:    #f0c040;
-      --text:      #c8dde8;
-      --text-dim:  #4a6878;
-      --border:    rgba(0,212,255,0.15);
-      --border2:   rgba(0,255,136,0.2);
-      --glow-g:    0 0 20px rgba(0,255,136,0.4);
-      --glow-c:    0 0 20px rgba(0,212,255,0.4);
-      --glow-r:    0 0 20px rgba(255,51,102,0.4);
-      --card-bg:   rgba(6,20,30,0.85);
-      --font-head: 'Orbitron', sans-serif;
-      --font-mono: 'Share Tech Mono', monospace;
-      --font-body: 'Rajdhani', sans-serif;
+      --bg: #02050a;
+      --glass: rgba(10, 20, 40, 0.65);
+      --glass-border: rgba(0, 212, 255, 0.25);
+      --green: #00ff88;
+      --cyan: #00f0ff;
+      --red: #ff3366;
+      --yellow: #ffd700;
+      --text: #e0f0ff;
+      --text-dim: #8899aa;
     }
 
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html { scroll-behavior: smooth; }
-
+    * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       background: var(--bg);
       color: var(--text);
-      font-family: var(--font-body);
-      font-size: 16px;
+      font-family: 'Rajdhani', sans-serif;
       overflow-x: hidden;
       min-height: 100vh;
+      background-image: 
+        radial-gradient(circle at 50% 30%, rgba(0, 240, 255, 0.08) 0%, transparent 60%),
+        linear-gradient(180deg, #02050a 0%, #0a0f1f 100%);
+    }
+
+    /* Glassmorphism + Scanlines */
+    .glass {
+      background: var(--glass);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--glass-border);
+      border-radius: 16px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
     }
 
     .scanlines {
       position: fixed; inset: 0; z-index: 1;
-      background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.07) 2px, rgba(0,0,0,0.07) 4px);
+      background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,255,255,0.03) 3px, rgba(0,255,255,0.03) 6px);
       pointer-events: none;
     }
 
-    .ticker-wrap {
-      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-      height: 36px; background: rgba(0,10,18,0.95);
-      border-bottom: 1px solid var(--cyan2);
-      display: flex; align-items: center; overflow: hidden;
-    }
-    .ticker-label {
-      flex-shrink: 0; background: var(--cyan); color: #000;
-      font-family: var(--font-head); font-size: 10px; font-weight: 700;
-      padding: 0 14px; height: 100%; display: flex; align-items: center;
-      letter-spacing: 2px;
-    }
-    .ticker-track { flex: 1; overflow: hidden; }
-    .ticker-inner {
-      display: flex; gap: 48px; white-space: nowrap;
-      font-family: var(--font-mono); font-size: 12px;
-      animation: tickerScroll 60s linear infinite;
-    }
-    @keyframes tickerScroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
-
-    .main-wrapper { position: relative; z-index: 2; padding-top: 36px; }
-
+    /* Header */
     .header {
-      padding: 48px 60px 32px;
-      border-bottom: 1px solid var(--border);
-      display: flex; align-items: center; justify-content: space-between;
-    }
-    .logo-name {
-      font-family: var(--font-head); font-size: 36px; font-weight: 900;
-      letter-spacing: 8px; color: var(--cyan);
-      text-shadow: 0 0 30px rgba(0,212,255,0.6);
-    }
-    .logo-tag { font-family: var(--font-mono); font-size: 11px; color: var(--green); letter-spacing: 4px; }
-
-    .section { padding: 40px 60px; }
-    .section-title {
-      font-family: var(--font-head); font-size: 13px; font-weight: 700;
-      letter-spacing: 4px; color: var(--cyan);
-    }
-    .section-title::before { content: '▶ '; color: var(--green); }
-
-    .top5-grid {
-      display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px;
-    }
-    .stock-card {
-      background: var(--card-bg); border: 1px solid var(--border);
-      padding: 22px 20px; transition: all 0.3s;
-      cursor: pointer;
-    }
-    .stock-card:hover {
-      transform: translateY(-6px);
-      border-color: var(--cyan);
-      box-shadow: var(--glow-c);
-    }
-
-    .budget-section {
-      background: linear-gradient(135deg, rgba(0,25,40,0.9), rgba(0,10,20,0.9));
-      border: 1px solid var(--border2); border-left: 3px solid var(--green);
       padding: 40px 60px;
-    }
-
-    .portfolio-section { display: none; padding: 0 60px 40px; }
-    .portfolio-section.visible { display: block; }
-
-    .stocks-table {
-      width: 100%; border-collapse: collapse; font-family: var(--font-mono); font-size: 13px;
-    }
-    .stocks-table th {
-      background: rgba(0,15,25,0.95); padding: 12px 16px;
-      font-family: var(--font-head); font-size: 9px; letter-spacing: 3px; color: var(--cyan);
-    }
-    .stocks-table td { padding: 12px 16px; border-bottom: 1px solid rgba(0,212,255,0.05); }
-
-    footer {
-      padding: 24px 60px;
-      border-top: 1px solid var(--border);
       display: flex;
       justify-content: space-between;
       align-items: center;
-      flex-wrap: wrap;
+      border-bottom: 1px solid rgba(0,212,255,0.2);
+    }
+    .logo-name {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 42px;
+      font-weight: 900;
+      letter-spacing: 10px;
+      background: linear-gradient(90deg, #00f0ff, #00ff88);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-shadow: 0 0 40px rgba(0,240,255,0.6);
+    }
+
+    /* Top Signals */
+    .top5-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
       gap: 20px;
-      font-size: 11px;
+      padding: 0 60px;
+    }
+    .stock-card {
+      padding: 24px;
+      border-radius: 16px;
+      transition: all 0.4s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    .stock-card:hover {
+      transform: translateY(-12px) scale(1.03);
+      box-shadow: 0 0 40px rgba(0, 240, 255, 0.4);
+    }
+    .stock-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; height: 3px;
+      background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+    }
+
+    /* Portfolio Engine */
+    .budget-section {
+      margin: 40px 60px;
+      padding: 50px;
+      border-radius: 20px;
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+    }
+
+    .budget-input {
+      background: transparent;
+      border: none;
+      font-size: 32px;
+      color: white;
+      width: 100%;
+    }
+
+    .analyze-btn {
+      margin-top: 20px;
+      padding: 18px 40px;
+      font-size: 15px;
+      letter-spacing: 4px;
+      background: linear-gradient(90deg, #00ff88, #00f0ff);
+      color: black;
+      font-weight: 700;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .analyze-btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 30px rgba(0,255,136,0.6);
+    }
+
+    /* Portfolio Results */
+    .portfolio-section {
+      display: none;
+      margin: 0 60px 40px;
+    }
+    .portfolio-section.visible { display: block; }
+
+    .port-row {
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      padding: 20px 24px;
+      border-radius: 14px;
+      margin-bottom: 12px;
+      display: grid;
+      grid-template-columns: 180px 1fr 1fr 1fr 1fr 1fr auto;
+      gap: 20px;
+      align-items: center;
+    }
+
+    /* Table */
+    .table-wrap {
+      margin: 0 60px 40px;
+      border-radius: 16px;
+      overflow: hidden;
+      border: 1px solid var(--glass-border);
+    }
+    .stocks-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--glass);
+    }
+    .stocks-table th {
+      background: rgba(0, 20, 40, 0.9);
+      padding: 16px;
+      text-align: left;
+      font-size: 10px;
+      letter-spacing: 2px;
+      color: var(--cyan);
+    }
+    .stocks-table td {
+      padding: 14px 16px;
+      border-top: 1px solid rgba(255,255,255,0.05);
+    }
+
+    footer {
+      text-align: center;
+      padding: 30px;
       color: var(--text-dim);
+      font-size: 11px;
+      border-top: 1px solid rgba(0,212,255,0.1);
     }
   </style>
 </head>
@@ -140,109 +184,83 @@
 
 <div class="scanlines"></div>
 
-<!-- Ticker -->
-<div class="ticker-wrap">
-  <div class="ticker-label">NSE LIVE</div>
-  <div class="ticker-track">
-    <div class="ticker-inner" id="tickerInner">LOADING MARKET DATA...</div>
+<div class="header glass">
+  <div>
+    <div class="logo-name">N50 NEXUS</div>
+    <div style="font-size:12px; letter-spacing:3px; color:var(--green);">NIFTY 50 • LIVE QUANTUM TERMINAL</div>
+  </div>
+  <div style="text-align:right">
+    <div style="color:var(--green); font-size:14px;">● LIVE</div>
   </div>
 </div>
 
-<div class="main-wrapper">
+<!-- Top 5 -->
+<section style="padding:40px 60px 20px;">
+  <div style="margin-bottom:20px; font-family:'Orbitron'; font-size:14px; letter-spacing:4px; color:var(--cyan);">TOP SIGNALS</div>
+  <div class="top5-grid" id="top5Grid"></div>
+</section>
 
-  <header class="header">
+<!-- Portfolio Engine -->
+<div class="budget-section glass">
+  <div style="text-align:center; margin-bottom:30px;">
+    <div style="font-size:18px; letter-spacing:3px; color:var(--green);">PORTFOLIO OPTIMIZER v2.0</div>
+  </div>
+  <div style="display:flex; gap:30px; align-items:center; flex-wrap:wrap; justify-content:center;">
+    <div style="min-width:320px;">
+      <input type="number" class="budget-input" id="budgetInput" placeholder="50000" />
+    </div>
     <div>
-      <div class="logo-name">N50 NEXUS</div>
-      <div class="logo-tag">NIFTY 50 LIVE INTELLIGENCE TERMINAL</div>
-    </div>
-    <div class="live-indicator">
-      <div class="live-dot"></div>
-      <span id="liveStatus">LIVE FEED ACTIVE</span>
-    </div>
-  </header>
-
-  <!-- Top 5 -->
-  <section class="section">
-    <div class="section-header">
-      <div class="section-title">TOP SIGNALS TODAY</div>
-      <div class="section-sub" id="lastUpdated">—</div>
-    </div>
-    <div class="top5-grid" id="top5Grid"></div>
-  </section>
-
-  <!-- Portfolio Engine -->
-  <div class="budget-section">
-    <div class="budget-layout">
-      <div class="budget-input-group">
-        <div class="budget-label">PORTFOLIO ENGINE — ENTER BUDGET</div>
-        <div class="budget-input-wrap">
-          <div class="budget-rupee">₹</div>
-          <input type="number" class="budget-input" id="budgetInput" placeholder="50000" min="1000" />
-        </div>
-        <div class="budget-presets">
-          <button class="preset-btn" onclick="setPreset(10000)">₹10K</button>
-          <button class="preset-btn" onclick="setPreset(25000)">₹25K</button>
-          <button class="preset-btn" onclick="setPreset(50000)">₹50K</button>
-          <button class="preset-btn" onclick="setPreset(100000)">₹1L</button>
-          <button class="preset-btn" onclick="setPreset(500000)">₹5L</button>
-        </div>
-        <button class="analyze-btn" id="analyzeBtn" onclick="runAnalysis()">
-          ANALYZE &amp; BUILD PORTFOLIO
-        </button>
-      </div>
+      <button class="analyze-btn" id="analyzeBtn" onclick="runAnalysis()">ANALYZE &amp; DEPLOY PORTFOLIO</button>
     </div>
   </div>
-
-  <!-- Portfolio Results -->
-  <div class="portfolio-section" id="portfolioSection">
-    <div style="padding-top:32px">
-      <div class="portfolio-header">
-        <div class="section-title">RECOMMENDED PORTFOLIO</div>
-        <div class="port-summary" id="portSummary"></div>
-      </div>
-      <div class="portfolio-rows" id="portfolioRows"></div>
-    </div>
+  <div style="text-align:center; margin-top:20px;">
+    <button onclick="setPreset(25000)" class="preset-btn">25K</button>
+    <button onclick="setPreset(50000)" class="preset-btn">50K</button>
+    <button onclick="setPreset(100000)" class="preset-btn">1 LAKH</button>
+    <button onclick="setPreset(500000)" class="preset-btn">5 LAKH</button>
   </div>
-
-  <!-- Live Scan Table -->
-  <div class="section">
-    <div class="section-header">
-      <div class="section-title">NIFTY 50 LIVE SCAN</div>
-      <input type="text" id="searchInput" placeholder="Search symbol or name..." 
-             style="background:rgba(0,0,0,0.5);border:1px solid var(--border);padding:8px 16px;color:var(--text);font-family:var(--font-mono);font-size:12px;outline:none;width:280px;"
-             oninput="filterTable()" />
-    </div>
-    <div class="table-wrap">
-      <table class="stocks-table" id="stocksTable">
-        <thead>
-          <tr>
-            <th>SYMBOL</th>
-            <th>LTP (₹)</th>
-            <th>CHANGE %</th>
-            <th>RSI</th>
-            <th>MACD</th>
-            <th>BOLLINGER</th>
-            <th>VOLUME</th>
-            <th>SCORE</th>
-            <th>SIGNAL</th>
-            <th>TARGET</th>
-            <th>STOP-LOSS</th>
-          </tr>
-        </thead>
-        <tbody id="stocksTbody"></tbody>
-      </table>
-    </div>
-  </div>
-
-  <footer>
-    <div>⚠ FOR EDUCATIONAL PURPOSES ONLY. NOT FINANCIAL ADVICE.</div>
-    <div style="text-align:center;">
-      Created by <strong>Ayan Bhowmick</strong><br>
-      <a href="mailto:ayaandeep9051@gmail.com" style="color:var(--cyan);">ayaandeep9051@gmail.com</a>
-    </div>
-    <div>DATA VIA YAHOO FINANCE • REFRESHES EVERY 5 MIN</div>
-  </footer>
 </div>
+
+<!-- Portfolio Results -->
+<div class="portfolio-section glass" id="portfolioSection" style="margin:0 60px 40px; padding:30px;">
+  <div style="font-size:18px; margin-bottom:20px; color:var(--cyan);">RECOMMENDED DEPLOYMENT</div>
+  <div class="port-summary" id="portSummary" style="display:flex; gap:40px; margin-bottom:25px;"></div>
+  <div class="portfolio-rows" id="portfolioRows"></div>
+</div>
+
+<!-- Live Table -->
+<div style="padding:0 60px 40px;">
+  <div style="margin-bottom:20px; font-family:'Orbitron'; font-size:14px; letter-spacing:4px; color:var(--cyan);">NIFTY 50 QUANTUM SCAN</div>
+  <div class="table-wrap glass">
+    <table class="stocks-table" id="stocksTable">
+      <thead>
+        <tr>
+          <th>SYMBOL</th>
+          <th>LTP</th>
+          <th>CHANGE</th>
+          <th>RSI</th>
+          <th>MACD</th>
+          <th>BOLLINGER</th>
+          <th>VOL</th>
+          <th>SCORE</th>
+          <th>SIGNAL</th>
+          <th>TARGET</th>
+          <th>STOP</th>
+        </tr>
+      </thead>
+      <tbody id="stocksTbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<footer>
+  <div>⚠ EDUCATIONAL PURPOSE ONLY • NOT FINANCIAL ADVICE</div>
+  <div>
+    Created by <strong>Ayan Bhowmick</strong><br>
+    <a href="mailto:ayaandeep9051@gmail.com" style="color:var(--cyan);">ayaandeep9051@gmail.com</a>
+  </div>
+  <div>POWERED BY YAHOO FINANCE • REFRESH EVERY 5 MIN</div>
+</footer>
 
 <script src="app.js"></script>
 </body>
