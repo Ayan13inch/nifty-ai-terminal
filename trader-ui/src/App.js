@@ -2,36 +2,34 @@ const API_BASE = "https://n50-nexus-api.onrender.com";
 
 let allStocks = [];
 
-// Utility Functions
-function formatNumber(num) {
-    return num.toLocaleString('en-IN');
-}
+console.log("🚀 N50 Nexus Frontend Loaded");
 
+// Utility
 function showToast(message, isError = false) {
     const toast = document.getElementById('toast');
-    toast.textContent = message;
-    toast.classList.toggle('error', isError);
-    toast.classList.add('show');
-    setTimeout(() => toast.classList.remove('show'), 4000);
+    if (toast) {
+        toast.textContent = message;
+        toast.classList.toggle('error', isError);
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 4000);
+    }
 }
 
-// Load Top 5 Signals
+// Load Top 5
 async function loadTop5() {
     try {
+        console.log("Fetching top 5...");
         const res = await fetch(API_BASE + "/api/top5");
         const data = await res.json();
         
         if (data.error) throw new Error(data.error);
 
         const grid = document.getElementById('top5Grid');
-        grid.innerHTML = '';
+        if (grid) grid.innerHTML = '';
 
         data.data.forEach(stock => {
-            const isBullish = stock.score >= 15;
-            const isBearish = stock.score <= -15;
-            
             const card = document.createElement('div');
-            card.className = `stock-card ${isBullish ? 'bullish' : isBearish ? 'bearish' : 'neutral'}`;
+            card.className = `stock-card ${stock.score >= 15 ? 'bullish' : stock.score <= -15 ? 'bearish' : 'neutral'}`;
             card.innerHTML = `
                 <div class="card-sym">${stock.symbol}</div>
                 <div class="card-name">${stock.name}</div>
@@ -41,14 +39,15 @@ async function loadTop5() {
                 </div>
                 <div class="action-badge" style="color:${stock.color}">${stock.action}</div>
             `;
-            grid.appendChild(card);
+            if (grid) grid.appendChild(card);
         });
 
-        document.getElementById('lastUpdated').textContent = 
-            `Last updated: ${new Date(data.last_updated).toLocaleTimeString()}`;
-            
+        const lastUpdated = document.getElementById('lastUpdated');
+        if (lastUpdated) lastUpdated.textContent = `Last updated: ${new Date(data.last_updated).toLocaleTimeString()}`;
+
+        console.log("✅ Top 5 loaded successfully");
     } catch (e) {
-        console.error(e);
+        console.error("Top5 Error:", e);
         showToast("Failed to load top signals", true);
     }
 }
@@ -56,20 +55,24 @@ async function loadTop5() {
 // Load All Stocks
 async function loadAllStocks() {
     try {
+        console.log("Fetching all stocks...");
         const res = await fetch(API_BASE + "/api/all");
         const data = await res.json();
+        
         if (data.error) throw new Error(data.error);
 
         allStocks = data.data || [];
         renderTable(allStocks);
+        console.log(`✅ Loaded ${allStocks.length} stocks`);
     } catch (e) {
-        console.error(e);
+        console.error("All Stocks Error:", e);
         showToast("Failed to load market data", true);
     }
 }
 
 function renderTable(stocks) {
     const tbody = document.getElementById('stocksTbody');
+    if (!tbody) return;
     tbody.innerHTML = '';
 
     stocks.forEach(stock => {
@@ -91,7 +94,6 @@ function renderTable(stocks) {
     });
 }
 
-// Filter Table
 function filterTable() {
     const search = document.getElementById('searchInput').value.toLowerCase().trim();
     const actionFilter = document.getElementById('filterAction').value;
@@ -107,14 +109,12 @@ function filterTable() {
     renderTable(filtered);
 }
 
-// Portfolio Analysis
 async function runAnalysis() {
-    const budgetInput = document.getElementById('budgetInput');
-    const budget = parseFloat(budgetInput.value) || 50000;
+    const budget = parseFloat(document.getElementById('budgetInput').value) || 50000;
     const btn = document.getElementById('analyzeBtn');
-
-    btn.classList.add('loading');
-    btn.textContent = "BUILDING PORTFOLIO...";
+    
+    btn.textContent = "BUILDING...";
+    btn.disabled = true;
 
     try {
         const res = await fetch(API_BASE + "/api/recommendations", {
@@ -122,21 +122,18 @@ async function runAnalysis() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ budget })
         });
-
         const data = await res.json();
+
         if (data.error) throw new Error(data.error);
-
-        showToast(`Portfolio Ready! ₹${data.total_invested} invested in ${data.portfolio.length} stocks`);
-
-        // You can expand this later to show full portfolio UI
-        console.log("Recommended Portfolio:", data);
-
+        
+        showToast(`✅ Portfolio Ready! ₹${data.total_invested} invested`);
+        console.log("Portfolio:", data);
     } catch (e) {
         console.error(e);
         showToast("Failed to generate portfolio", true);
     } finally {
-        btn.classList.remove('loading');
         btn.textContent = "ANALYZE & BUILD PORTFOLIO";
+        btn.disabled = false;
     }
 }
 
@@ -157,16 +154,16 @@ function switchTab(tab) {
     }
 }
 
-// Initialize App
+// Initialize
 document.addEventListener('DOMContentLoaded', () => {
+    console.log("📡 Initializing N50 Nexus...");
     loadTop5();
     loadAllStocks();
 
-    // Auto refresh every 5 minutes
     setInterval(() => {
         loadTop5();
         loadAllStocks();
     }, 300000);
 
-    showToast("✅ Connected to N50 Nexus Live");
+    showToast("✅ Connected to N50 Nexus");
 });
