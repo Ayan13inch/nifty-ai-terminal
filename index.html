@@ -3,112 +3,128 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>N50 NEXUS — Nifty 50 Live Intelligence</title>
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  <title>N50 NEXUS</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600&display=swap" rel="stylesheet">
 
   <style>
     :root {
-      --bg: #020508;
-      --glass: rgba(15, 25, 45, 0.85);
-      --accent: #00d4ff;
-      --green: #00ff88;
-      --red: #ff3366;
+      --bg: #0a0b0f;
+      --card: rgba(255,255,255,0.06);
+      --accent: #00f0ff;
+      --green: #00ff9d;
+      --red: #ff3b5c;
     }
     body {
       background: var(--bg);
-      color: #c8dde8;
-      font-family: 'Share Tech Mono', monospace;
+      color: #f0f4ff;
+      font-family: 'Inter', sans-serif;
       margin: 0;
       padding: 0;
-      background-image: linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px),
-                        linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px);
-      background-size: 60px 60px;
+      min-height: 100vh;
     }
-
     .glass {
-      background: var(--glass);
-      backdrop-filter: blur(12px);
-      border: 1px solid rgba(0,212,255,0.25);
-      border-radius: 12px;
+      background: var(--card);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(0,240,255,0.2);
+      border-radius: 20px;
     }
 
     header {
-      padding: 20px 15px;
-      background: rgba(5,10,25,0.95);
-      border-bottom: 1px solid var(--accent);
+      padding: 20px 16px;
       display: flex;
       justify-content: space-between;
       align-items: center;
+      background: rgba(10,11,15,0.95);
       position: sticky;
       top: 0;
       z-index: 100;
     }
     .logo {
-      font-family: 'Orbitron', sans-serif;
-      font-size: 28px;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 26px;
+      font-weight: 600;
+      letter-spacing: -1px;
+    }
+
+    .section { padding: 24px 16px; }
+    .title {
+      font-size: 15px;
+      font-weight: 600;
       color: var(--accent);
-      letter-spacing: 4px;
+      margin-bottom: 16px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
     }
 
     .top5-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
       gap: 16px;
-      padding: 20px 15px;
     }
     .stock-card {
-      padding: 18px;
-      border-radius: 12px;
+      padding: 20px;
+      border-radius: 18px;
       transition: 0.3s;
     }
-    .stock-card:hover { transform: translateY(-8px); }
+    .stock-card:hover { transform: translateY(-6px); }
 
     .portfolio-engine {
-      margin: 20px 15px;
-      padding: 30px 20px;
       text-align: center;
+      padding: 32px 20px;
     }
-
     .budget-input {
-      font-size: 32px;
-      width: 100%;
-      max-width: 380px;
+      font-size: 36px;
+      font-weight: 500;
       background: transparent;
-      border: 2px solid var(--accent);
+      border: none;
+      border-bottom: 2px solid var(--accent);
       color: white;
       text-align: center;
-      padding: 12px;
-      border-radius: 8px;
+      width: 100%;
+      max-width: 320px;
+      outline: none;
     }
 
     .analyze-btn {
-      margin-top: 20px;
-      padding: 16px 50px;
-      background: linear-gradient(#00ff88, #00cc66);
+      margin-top: 24px;
+      padding: 16px 40px;
+      background: linear-gradient(90deg, #00ff9d, #00d4ff);
       color: black;
-      font-weight: bold;
+      font-weight: 600;
       border: none;
-      border-radius: 8px;
-      cursor: pointer;
+      border-radius: 999px;
       font-size: 16px;
+      cursor: pointer;
+    }
+
+    .portfolio-section {
+      display: none;
+      padding: 20px 16px;
+    }
+    .portfolio-section.visible { display: block; }
+
+    .port-row {
+      background: rgba(255,255,255,0.05);
+      padding: 16px;
+      border-radius: 16px;
+      margin-bottom: 12px;
     }
 
     table {
       width: 100%;
       border-collapse: collapse;
-      background: var(--glass);
     }
     th, td {
-      padding: 12px 10px;
+      padding: 14px 10px;
       text-align: left;
     }
-    th { background: #0a1328; color: var(--accent); }
+    th { color: var(--accent); font-size: 13px; }
 
     footer {
       text-align: center;
-      padding: 25px;
-      color: #555;
-      font-size: 12px;
+      padding: 30px 16px;
+      color: #64748b;
+      font-size: 13px;
     }
   </style>
 </head>
@@ -116,58 +132,49 @@
 
 <header>
   <div class="logo">N50 NEXUS</div>
-  <div style="color:var(--green)">● LIVE</div>
+  <div style="color:#00ff9d; font-weight:500;">● LIVE</div>
 </header>
 
-<div style="max-width:1400px; margin:0 auto; padding:15px;">
+<div class="section">
+  <div class="title">Top Signals</div>
+  <div class="top5-grid" id="top5Grid"></div>
+</div>
 
-  <!-- Top Signals -->
-  <div style="margin-bottom:30px">
-    <h2 style="color:var(--accent); margin-bottom:15px;">TOP SIGNALS</h2>
-    <div class="top5-grid" id="top5Grid"></div>
+<div class="section portfolio-engine glass">
+  <div class="title">Portfolio Engine</div>
+  <input type="number" id="budgetInput" class="budget-input" placeholder="Enter Amount">
+  <button class="analyze-btn" id="analyzeBtn" onclick="runAnalysis()">
+    ANALYZE & BUILD PORTFOLIO
+  </button>
+</div>
+
+<!-- Portfolio Results -->
+<div class="portfolio-section glass" id="portfolioSection">
+  <div class="title">Recommended Portfolio</div>
+  <div id="portSummary" style="margin:20px 0; font-size:15px;"></div>
+  <div id="portfolioRows"></div>
+</div>
+
+<div class="section">
+  <div class="title">Live Market Scan</div>
+  <div class="glass" style="overflow-x:auto; padding:4px;">
+    <table id="stocksTable">
+      <thead>
+        <tr>
+          <th>Symbol</th>
+          <th>Price</th>
+          <th>Change</th>
+          <th>Score</th>
+          <th>Signal</th>
+        </tr>
+      </thead>
+      <tbody id="stocksTbody"></tbody>
+    </table>
   </div>
-
-  <!-- Portfolio Engine -->
-  <div class="glass portfolio-engine">
-    <h2 style="margin-bottom:10px;">Portfolio Engine</h2>
-    <input type="number" id="budgetInput" class="budget-input" placeholder="50000" />
-    <br>
-    <button class="analyze-btn" id="analyzeBtn" onclick="runAnalysis()">
-      ANALYZE & BUILD PORTFOLIO
-    </button>
-  </div>
-
-  <!-- Portfolio Results -->
-  <div class="glass portfolio-section" id="portfolioSection" style="margin:20px 15px; padding:25px; display:none;">
-    <h2 style="color:var(--accent)">Recommended Portfolio</h2>
-    <div id="portSummary" style="margin:20px 0;"></div>
-    <div id="portfolioRows"></div>
-  </div>
-
-  <!-- Live Table -->
-  <div>
-    <h2 style="color:var(--accent); margin:20px 0 15px;">NIFTY 50 LIVE SCAN</h2>
-    <div class="glass" style="overflow-x:auto;">
-      <table id="stocksTable">
-        <thead>
-          <tr>
-            <th>Symbol</th>
-            <th>Price</th>
-            <th>Change</th>
-            <th>RSI</th>
-            <th>Score</th>
-            <th>Signal</th>
-          </tr>
-        </thead>
-        <tbody id="stocksTbody"></tbody>
-      </table>
-    </div>
-  </div>
-
 </div>
 
 <footer>
-  ⚠ For Educational Purposes Only • Not Financial Advice<br><br>
+  Educational Purposes Only • Not Financial Advice<br><br>
   Created by <strong>Ayan Bhowmick</strong><br>
   <a href="mailto:ayaandeep9051@gmail.com" style="color:var(--accent)">ayaandeep9051@gmail.com</a>
 </footer>
