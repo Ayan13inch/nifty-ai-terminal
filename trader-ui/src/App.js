@@ -11,13 +11,13 @@ import axios from "axios";
 import io from "socket.io-client";
 
 // ─── CONFIG ────────────────────────────────────────────────
-const API_URL = "http://127.0.0.1:5000/scan";
-const RECOMMEND_URL = "http://127.0.0.1:5000/recommend";
+const API_URL = "https://nifty-ai-terminal.onrender.com/scan";
+const RECOMMEND_URL = "https://nifty-ai-terminal.onrender.com/recommend";
 const AUTH_TOKEN = "my-secret-token-12345";
 const TOTAL_ROWS = 10;
 
 const socket = io(
-  "http://127.0.0.1:5000",
+  "https://nifty-ai-terminal.onrender.com",
   {
     auth: {
       token: AUTH_TOKEN
