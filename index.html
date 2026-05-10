@@ -4,55 +4,46 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>N50 NEXUS</title>
-  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
   <style>
     :root {
-      --bg: #0a0a0f;
-      --card: rgba(20, 25, 45, 0.95);
+      --bg: #05070f;
+      --card: rgba(15,20,40,0.95);
       --accent: #00ffff;
       --green: #39ff14;
-      --red: #ff00aa;
+      --red: #ff0088;
     }
     body {
       background: var(--bg);
-      color: #00ffcc;
-      font-family: 'VT323', monospace;
+      color: #c8ffdd;
+      font-family: 'Share Tech Mono', monospace;
       margin: 0;
-      padding: 0;
-      line-height: 1.4;
-    }
-
-    .glass {
-      background: var(--card);
-      border: 2px solid var(--accent);
-      border-radius: 12px;
-      box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
     }
 
     header {
+      background: linear-gradient(to right, #0a0f1f, #1a0033);
       padding: 15px 20px;
-      background: rgba(10,10,20,0.98);
       display: flex;
       justify-content: space-between;
       align-items: center;
       border-bottom: 3px solid var(--accent);
+      box-shadow: 0 0 20px rgba(0,255,255,0.3);
     }
     .logo {
-      font-family: 'Press Start 2P', cursive;
-      font-size: 24px;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 28px;
       color: var(--accent);
-      text-shadow: 0 0 10px var(--accent);
+      text-shadow: 0 0 15px var(--accent);
     }
 
     .section { padding: 25px 20px; }
-    .title {
-      font-family: 'Press Start 2P', cursive;
-      color: var(--accent);
-      font-size: 16px;
+    .title { 
+      color: var(--accent); 
+      font-size: 17px; 
       margin-bottom: 15px;
-      text-shadow: 0 0 8px var(--accent);
+      text-shadow: 0 0 10px var(--accent);
     }
 
     .top5-grid {
@@ -61,74 +52,50 @@
       gap: 16px;
     }
     .stock-card {
+      background: var(--card);
       padding: 18px;
-      transition: all 0.3s;
-      cursor: pointer;
+      border-radius: 12px;
+      border: 1px solid rgba(0,255,255,0.3);
+      transition: 0.3s;
     }
-    .stock-card:hover {
-      transform: scale(1.05);
-      box-shadow: 0 0 30px rgba(0,255,255,0.5);
-    }
+    .stock-card:hover { transform: translateY(-8px); border-color: var(--green); }
 
-    .budget-input {
-      font-family: 'VT323', monospace;
-      font-size: 38px;
-      background: transparent;
-      border: 3px solid var(--accent);
-      color: #fff;
+    .portfolio-engine {
+      background: var(--card);
+      padding: 30px 20px;
       text-align: center;
-      padding: 12px;
-      border-radius: 8px;
-      transition: all 0.3s;
+      border-radius: 16px;
+      margin: 20px;
+      border: 2px solid var(--accent);
     }
-    .budget-input:focus {
-      border-color: var(--green);
-      box-shadow: 0 0 20px var(--green);
-      transform: scale(1.03);
+    .budget-input {
+      font-size: 42px;
+      background: transparent;
+      border: none;
+      border-bottom: 3px solid var(--accent);
+      color: white;
+      text-align: center;
+      width: 100%;
+      max-width: 340px;
     }
 
     .analyze-btn {
       margin-top: 20px;
-      padding: 16px 40px;
-      background: linear-gradient(45deg, #39ff14, #00ffff);
+      padding: 15px 40px;
+      background: linear-gradient(#39ff14, #00ffff);
       color: black;
       font-weight: bold;
       border: none;
-      border-radius: 8px;
-      font-size: 18px;
+      border-radius: 50px;
       cursor: pointer;
-      transition: all 0.4s;
-    }
-    .analyze-btn:hover {
-      transform: scale(1.1) rotate(2deg);
-      box-shadow: 0 0 30px #39ff14;
     }
 
-    .sparkline { height: 60px; }
-
-    .port-row {
-      padding: 14px;
-      margin-bottom: 12px;
-      border-radius: 10px;
-      background: rgba(0,255,200,0.05);
-      border-left: 4px solid var(--green);
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      background: var(--card);
-    }
-    th, td {
-      padding: 14px 10px;
-      border-bottom: 1px solid #1a2a3a;
-    }
-    th { color: var(--accent); }
+    .sparkline-container { height: 50px; margin: 8px 0; }
 
     footer {
       text-align: center;
       padding: 30px;
-      color: #555;
+      color: #666;
       font-size: 13px;
     }
   </style>
@@ -137,7 +104,7 @@
 
 <header>
   <div class="logo">N50 NEXUS</div>
-  <div style="color:#39ff14; font-size:18px;">● LIVE</div>
+  <div style="color:#39ff14; font-size:18px; font-weight:bold;">● LIVE MARKET</div>
 </header>
 
 <div class="section">
@@ -145,28 +112,27 @@
   <div class="top5-grid" id="top5Grid"></div>
 </div>
 
-<div class="section glass">
+<div class="section portfolio-engine">
   <div class="title">PORTFOLIO ENGINE</div>
-  <input type="number" id="budgetInput" class="budget-input glass" placeholder="ENTER BUDGET">
-  <button class="analyze-btn" id="analyzeBtn" onclick="runAnalysis()">ANALYZE & BUILD</button>
+  <input type="number" id="budgetInput" class="budget-input" placeholder="ENTER AMOUNT">
+  <button class="analyze-btn" id="analyzeBtn" onclick="runAnalysis()">ANALYZE & BUILD PORTFOLIO</button>
 </div>
 
-<div class="portfolio-section glass section" id="portfolioSection" style="display:none;">
+<div class="portfolio-section section" id="portfolioSection" style="display:none; background:var(--card); border-radius:16px; padding:25px;">
   <div class="title">RECOMMENDED PORTFOLIO</div>
-  <div id="portSummary" style="margin:15px 0; font-size:18px;"></div>
+  <div id="portSummary" style="margin:15px 0; font-size:17px;"></div>
   <div id="portfolioRows"></div>
 </div>
 
 <div class="section">
   <div class="title">LIVE MARKET SCAN</div>
-  <div class="glass" style="overflow-x:auto; padding:10px;">
-    <table id="stocksTable">
+  <div style="overflow-x:auto; background:var(--card); padding:10px; border-radius:12px;">
+    <table style="width:100%; border-collapse:collapse;" id="stocksTable">
       <thead>
-        <tr>
+        <tr style="background:#0a0f20;">
           <th>Symbol</th>
           <th>Price</th>
           <th>Change</th>
-          <th>RSI</th>
           <th>Score</th>
           <th>Signal</th>
           <th>Trend</th>
@@ -180,7 +146,7 @@
 <footer>
   Educational Purposes Only • Not Financial Advice<br><br>
   Created by <strong>Ayan Bhowmick</strong><br>
-  <a href="mailto:ayaandeep9051@gmail.com" style="color:var(--accent)">ayaandeep9051@gmail.com</a>
+  <a href="mailto:ayandeep9051@gmail.com" style="color:var(--accent)">ayandeep9051@gmail.com</a>
 </footer>
 
 <script src="app.js"></script>
