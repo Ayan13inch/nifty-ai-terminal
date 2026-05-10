@@ -2,86 +2,43 @@ from flask import Flask, jsonify
 from flask_cors import CORS
 import yfinance as yf
 import ta
-import requests
-import os
+import pandas as pd
+import numpy as np
 
-# ─────────────────────────────────────────────
-# APP SETUP
-# ─────────────────────────────────────────────
 app = Flask(__name__)
-
 CORS(app)
 
 # ─────────────────────────────────────────────
-# TELEGRAM
+# NIFTY 50 STOCKS
 # ─────────────────────────────────────────────
-BOT_TOKEN = os.getenv(
-    "TELEGRAM_BOT_TOKEN",
-    ""
-)
+NIFTY50 = [
 
-CHAT_ID = os.getenv(
-    "TELEGRAM_CHAT_ID",
-    ""
-)
-
-def send_telegram(msg):
-
-    if not BOT_TOKEN or not CHAT_ID:
-        return
-
-    try:
-
-        url = (
-            f"https://api.telegram.org/bot"
-            f"{BOT_TOKEN}/sendMessage"
-        )
-
-        requests.post(
-            url,
-            data={
-                "chat_id": CHAT_ID,
-                "text": msg
-            },
-            timeout=5
-        )
-
-    except:
-        pass
-
-# ─────────────────────────────────────────────
-# NIFTY STOCKS
-# ─────────────────────────────────────────────
-def get_nifty50_stocks():
-
-    return [
-
-        "RELIANCE",
-        "TCS",
-        "HDFCBANK",
-        "INFY",
-        "ICICIBANK",
-        "HINDUNILVR",
-        "ITC",
-        "SBIN",
-        "BHARTIARTL",
-        "KOTAKBANK",
-        "LT",
-        "AXISBANK",
-        "WIPRO",
-        "ASIANPAINT",
-        "MARUTI",
-        "SUNPHARMA",
-        "TITAN",
-        "ULTRACEMCO",
-        "BAJFINANCE",
-        "NTPC"
-    ]
+    "RELIANCE",
+    "TCS",
+    "HDFCBANK",
+    "INFY",
+    "ICICIBANK",
+    "HINDUNILVR",
+    "ITC",
+    "SBIN",
+    "BHARTIARTL",
+    "KOTAKBANK",
+    "LT",
+    "AXISBANK",
+    "WIPRO",
+    "ASIANPAINT",
+    "MARUTI",
+    "SUNPHARMA",
+    "TITAN",
+    "NTPC",
+    "BAJFINANCE",
+    "ULTRACEMCO"
+]
 
 # ─────────────────────────────────────────────
 # INDICATORS
 # ─────────────────────────────────────────────
-def compute_indicators(df):
+def add_indicators(df):
 
     close = df["Close"]
 
@@ -102,20 +59,20 @@ def compute_indicators(df):
 
     macd = ta.trend.MACD(close)
 
-    df["macd_hist"] = macd.macd_diff()
+    df["macd"] = macd.macd_diff()
 
     bb = ta.volatility.BollingerBands(close)
 
-    df["bb_pct"] = bb.bollinger_pband()
+    df["bb"] = bb.bollinger_pband()
 
     return df
 
 # ─────────────────────────────────────────────
-# SIGNAL ENGINE
+# SCORE ENGINE
 # ─────────────────────────────────────────────
-def generate_signal(df):
+def calculate_score(df):
 
-    df = compute_indicators(df)
+    df = add_indicators(df)
 
     last = df.iloc[-1]
 
@@ -126,84 +83,70 @@ def generate_signal(df):
     # EMA
     if last["ema9"] > last["ema21"]:
 
-        score += 1
+        score += 25
 
         reasons.append(
-            "EMA Bullish"
+            "EMA bullish crossover"
         )
 
     # RSI
-    if 40 < last["rsi"] < 75:
+    if 45 <= last["rsi"] <= 70:
 
-        score += 1
+        score += 25
 
         reasons.append(
-            f"RSI Healthy ({last['rsi']:.1f})"
+            f"RSI healthy ({round(last['rsi'],1)})"
         )
 
     # MACD
-    if last["macd_hist"] > 0:
+    if last["macd"] > 0:
 
-        score += 1
-
-        reasons.append(
-            "MACD Positive"
-        )
-
-    # BB
-    if last["bb_pct"] < 0.9:
-
-        score += 1
+        score += 25
 
         reasons.append(
-            "Good Bollinger Position"
+            "MACD positive"
         )
 
-    # FINAL SIGNAL
+    # Bollinger
+    if last["bb"] < 0.9:
+
+        score += 25
+
+        reasons.append(
+            "Good Bollinger position"
+        )
+
     signal = (
 
         "BUY"
 
-        if score >= 2
+        if score >= 50
 
-        else "SELL"
+        else "HOLD"
     )
 
-    confidence = round(
-        (score / 4) * 100
-    )
+    return {
 
-    return (
+        "score": score,
 
-        signal,
+        "signal": signal,
 
-        confidence,
+        "reasons": reasons,
 
-        {
-            "rsi": round(
-                float(last["rsi"]),
-                1
-            ),
-
-            "bb_pct": round(
-                float(last["bb_pct"]) * 100,
-                1
-            )
-        },
-
-        reasons
-    )
+        "rsi": round(
+            float(last["rsi"]),
+            1
+        )
+    }
 
 # ─────────────────────────────────────────────
-# STOCK SCANNER
+# LIVE SCAN
 # ─────────────────────────────────────────────
-def scan_stocks():
-
-    symbols = get_nifty50_stocks()
+def scan_market():
 
     results = []
 
-    for symbol in symbols:
+    for symbol in NIFTY50:
 
         try:
 
@@ -215,33 +158,39 @@ def scan_stocks():
 
                 period="5d",
 
-                interval="5m"
+                interval="15m"
             )
 
-            if df.empty or len(df) < 30:
-
+            if len(df) < 50:
                 continue
 
-            (
-                signal,
-                confidence,
-                indicators,
-                reasons
+            score_data = calculate_score(df)
 
-            ) = generate_signal(df)
-
-            price = float(
-                df["Close"].iloc[-1]
+            current_price = round(
+                float(df["Close"].iloc[-1]),
+                2
             )
 
-            ai_score = round(
+            target = round(
+                current_price * 1.05,
+                2
+            )
 
+            stop_loss = round(
+                current_price * 0.97,
+                2
+            )
+
+            expected_return = round(
                 (
-                    confidence
-                    +
-                    indicators["rsi"]
-                ) / 2,
-
+                    (
+                        target
+                        -
+                        current_price
+                    )
+                    /
+                    current_price
+                ) * 100,
                 1
             )
 
@@ -249,32 +198,40 @@ def scan_stocks():
 
                 "stock": symbol,
 
-                "price": round(
-                    price,
-                    2
-                ),
+                "price": current_price,
 
-                "signal": signal,
+                "score": score_data["score"],
 
-                "confidence": confidence,
+                "signal": score_data["signal"],
 
-                "ai_score": ai_score,
+                "rsi": score_data["rsi"],
 
-                "indicators": indicators,
+                "target": target,
 
-                "reasons": reasons
+                "stop_loss": stop_loss,
+
+                "expected_return": expected_return,
+
+                "reasons": score_data["reasons"]
             })
 
         except Exception as e:
 
-            print(
-                f"Error scanning {symbol}: {e}"
-            )
+            print(symbol, e)
+
+    results = sorted(
+
+        results,
+
+        key=lambda x: x["score"],
+
+        reverse=True
+    )
 
     return results
 
 # ─────────────────────────────────────────────
-# HEALTH
+# ROUTES
 # ─────────────────────────────────────────────
 @app.route("/health")
 def health():
@@ -284,114 +241,50 @@ def health():
         "status": "ok"
     })
 
-# ─────────────────────────────────────────────
-# LIVE SCAN
-# ─────────────────────────────────────────────
 @app.route("/scan")
 def scan():
 
-    results = scan_stocks()
+    return jsonify(
+        scan_market()
+    )
 
-    return jsonify(results)
+@app.route("/recommend/<int:budget>")
+def recommend(budget):
 
-# ─────────────────────────────────────────────
-# AI RECOMMENDATIONS
-# ─────────────────────────────────────────────
-@app.route("/recommend/<int:amount>")
-def recommend(amount):
-
-    stocks = scan_stocks()
+    stocks = scan_market()[:5]
 
     if not stocks:
 
         return jsonify({
 
-            "capital": amount,
-
-            "total_invested": 0,
-
-            "remaining": amount,
+            "capital": budget,
 
             "recommendations": []
         })
 
-    # ALWAYS TAKE TOP STOCKS
-    top_stocks = sorted(
-
-        stocks,
-
-        key=lambda x: x["ai_score"],
-
-        reverse=True
-
-    )[:5]
-
-    allocation_per_stock = (
-        amount / len(top_stocks)
-    )
+    allocation = budget / len(stocks)
 
     recommendations = []
 
     total_invested = 0
 
-    for stock in top_stocks:
+    for stock in stocks:
 
         qty = int(
-
-            allocation_per_stock
-            //
+            allocation //
             stock["price"]
         )
 
-        if qty <= 0:
-
-            continue
-
         invested = round(
-
             qty * stock["price"],
-
             2
         )
 
         total_invested += invested
 
-        target_price = round(
-
-            stock["price"] * 1.05,
-
-            2
-        )
-
-        stop_loss = round(
-
-            stock["price"] * 0.97,
-
-            2
-        )
-
-        estimated_profit = round(
-
-            (
-                target_price
-                -
-                stock["price"]
-            ) * qty,
-
-            2
-        )
-
-        sell_reason = (
-
-            f"Sell near ₹{target_price} "
-            f"or below ₹{stop_loss}"
-        )
-
         recommendations.append({
 
             "stock": stock["stock"],
-
-            "signal": stock["signal"],
 
             "price": stock["price"],
 
@@ -399,32 +292,35 @@ def recommend(amount):
 
             "invested": invested,
 
-            "confidence": stock["confidence"],
+            "signal": stock["signal"],
 
-            "ai_score": stock["ai_score"],
+            "score": stock["score"],
 
-            "target_price": target_price,
+            "target": stock["target"],
 
-            "stop_loss": stop_loss,
+            "stop_loss": stock["stop_loss"],
 
-            "estimated_profit": estimated_profit,
+            "expected_return": stock["expected_return"],
 
-            "sell_reason": sell_reason,
+            "sell_at": (
+                f"Sell near ₹{stock['target']} "
+                f"or exit below ₹{stock['stop_loss']}"
+            ),
 
             "reasons": stock["reasons"]
         })
 
     return jsonify({
 
-        "capital": amount,
+        "capital": budget,
 
-        "total_invested": round(
+        "invested": round(
             total_invested,
             2
         ),
 
         "remaining": round(
-            amount - total_invested,
+            budget - total_invested,
             2
         ),
 
@@ -437,8 +333,6 @@ def recommend(amount):
 if __name__ == "__main__":
 
     app.run(
-
         host="0.0.0.0",
-
         port=5000
     )

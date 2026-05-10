@@ -1,40 +1,38 @@
 import React, { useState } from "react";
 import axios from "axios";
 
-const BACKEND_URL =
+const BACKEND =
   "https://nifty-ai-terminal.onrender.com";
 
 export default function App() {
 
-  const [amount, setAmount] = useState(10000);
+  const [budget, setBudget] =
+    useState(100000);
 
-  const [data, setData] = useState(null);
+  const [data, setData] =
+    useState(null);
 
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] =
+    useState(false);
 
-  const [error, setError] = useState("");
-
-  const fetchRecommendations = async () => {
+  const fetchStocks = async () => {
 
     try {
 
       setLoading(true);
 
-      setError("");
-
       const res = await axios.get(
-        `${BACKEND_URL}/recommend/${amount}`
+
+        `${BACKEND}/recommend/${budget}`
       );
 
-      console.log("API RESPONSE:", res.data);
+      setData(res.data);
 
-      setData(res.data || {});
+    } catch (e) {
 
-    } catch (err) {
+      console.log(e);
 
-      console.log(err);
-
-      setError("Backend fetch failed");
+      alert("Backend Error");
 
     } finally {
 
@@ -42,225 +40,171 @@ export default function App() {
     }
   };
 
-  const recommendations =
-    data?.recommendations || [];
-
   return (
 
-    <div
-      style={{
-        background: "#020817",
-        minHeight: "100vh",
-        color: "white",
-        padding: 30,
-        fontFamily: "Arial"
-      }}
-    >
+    <div style={styles.page}>
 
-      <h1
-        style={{
-          fontSize: 40,
-          marginBottom: 30
-        }}
-      >
-        🚀 NIFTY AI INVESTMENT PLANNER
-      </h1>
+      <div style={styles.hero}>
 
-      <div
-        style={{
-          display: "flex",
-          gap: 20,
-          marginBottom: 30
-        }}
-      >
+        <h1 style={styles.title}>
+          🚀 NIFTY AI TERMINAL
+        </h1>
 
-        <input
-          type="number"
-          value={amount}
-          onChange={(e) =>
-            setAmount(e.target.value)
-          }
-          style={{
-            padding: 18,
-            fontSize: 20,
-            borderRadius: 10,
-            border: "1px solid #334155",
-            background: "#0f172a",
-            color: "white",
-            width: 300
-          }}
-        />
+        <p style={styles.subtitle}>
+          Live Nifty 50 AI Scanner
+        </p>
 
-        <button
-          onClick={fetchRecommendations}
-          style={{
-            padding: "18px 28px",
-            background: "#22c55e",
-            border: "none",
-            borderRadius: 10,
-            fontWeight: "bold",
-            fontSize: 18,
-            cursor: "pointer"
-          }}
-        >
-          {loading
-            ? "Finding..."
-            : "Find Stocks"}
-        </button>
-      </div>
+        <div style={styles.inputRow}>
 
-      {error && (
+          <input
 
-        <div
-          style={{
-            background: "#450a0a",
-            padding: 20,
-            borderRadius: 12,
-            marginBottom: 20,
-            color: "#fca5a5"
-          }}
-        >
-          {error}
+            type="number"
+
+            value={budget}
+
+            onChange={(e) =>
+              setBudget(e.target.value)
+            }
+
+            style={styles.input}
+
+            placeholder="Enter INR Budget"
+          />
+
+          <button
+
+            onClick={fetchStocks}
+
+            style={styles.button}
+          >
+            {loading
+              ? "Scanning..."
+              : "Find Stocks"}
+          </button>
+
         </div>
-      )}
+      </div>
 
       {data && (
 
         <div>
 
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns:
-                "repeat(auto-fit,minmax(250px,1fr))",
-              gap: 20,
-              marginBottom: 30
-            }}
-          >
+          <div style={styles.summaryGrid}>
 
-            <Card
-              title="Total Capital"
-              value={`₹${data.capital || 0}`}
+            <SummaryCard
+              title="Capital"
+              value={`₹${data.capital}`}
             />
 
-            <Card
-              title="Total Invested"
-              value={`₹${data.total_invested || 0}`}
+            <SummaryCard
+              title="Invested"
+              value={`₹${data.invested}`}
               color="#22c55e"
             />
 
-            <Card
-              title="Residual Amount"
-              value={`₹${data.remaining || 0}`}
+            <SummaryCard
+              title="Remaining"
+              value={`₹${data.remaining}`}
               color="#f59e0b"
             />
 
           </div>
 
-          {recommendations.length === 0 ? (
+          {data.recommendations.map(
+            (stock, i) => (
 
-            <div
-              style={{
-                background: "#071226",
-                padding: 30,
-                borderRadius: 16,
-                fontSize: 22
-              }}
-            >
-              No BUY opportunities found currently.
-            </div>
+              <div
+                key={i}
+                style={styles.stockCard}
+              >
 
-          ) : (
+                <div style={styles.stockTop}>
 
-            recommendations.map(
-              (stock, index) => (
+                  <div>
 
-                <div
-                  key={index}
-                  style={{
-                    background: "#071226",
-                    padding: 25,
-                    borderRadius: 18,
-                    marginBottom: 20,
-                    border:
-                      "1px solid #1e293b"
-                  }}
-                >
+                    <h2 style={styles.stockName}>
+                      {stock.stock}
+                    </h2>
 
-                  <h2
-                    style={{
-                      fontSize: 32,
-                      marginBottom: 10
-                    }}
-                  >
-                    {stock.stock}
-                  </h2>
-
-                  <div
-                    style={{
-                      color: "#22c55e",
-                      fontWeight: "bold",
-                      marginBottom: 20
-                    }}
-                  >
-                    BUY • Confidence{" "}
-                    {stock.confidence || 0}%
-                  </div>
-
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns:
-                        "repeat(auto-fit,minmax(180px,1fr))",
-                      gap: 20
-                    }}
-                  >
-
-                    <Metric
-                      label="Current Price"
-                      value={`₹${stock.price || 0}`}
-                    />
-
-                    <Metric
-                      label="Quantity"
-                      value={stock.qty || 0}
-                    />
-
-                    <Metric
-                      label="Invested"
-                      value={`₹${stock.invested || 0}`}
-                    />
-
-                    <Metric
-                      label="Target"
-                      value={`₹${stock.target_price || 0}`}
-                      color="#22c55e"
-                    />
-
-                    <Metric
-                      label="Stop Loss"
-                      value={`₹${stock.stop_loss || 0}`}
-                      color="#ef4444"
-                    />
-
-                    <Metric
-                      label="Expected Profit"
-                      value={`₹${stock.estimated_profit || 0}`}
-                      color="#38bdf8"
-                    />
+                    <div style={styles.buyBadge}>
+                      {stock.signal}
+                    </div>
 
                   </div>
+
+                  <div style={styles.score}>
+                    AI Score {stock.score}
+                  </div>
+
                 </div>
-              )
+
+                <div style={styles.metricGrid}>
+
+                  <Metric
+                    label="Price"
+                    value={`₹${stock.price}`}
+                  />
+
+                  <Metric
+                    label="Quantity"
+                    value={stock.qty}
+                  />
+
+                  <Metric
+                    label="Invested"
+                    value={`₹${stock.invested}`}
+                  />
+
+                  <Metric
+                    label="Target"
+                    value={`₹${stock.target}`}
+                    color="#22c55e"
+                  />
+
+                  <Metric
+                    label="Stop Loss"
+                    value={`₹${stock.stop_loss}`}
+                    color="#ef4444"
+                  />
+
+                  <Metric
+                    label="Expected Return"
+                    value={`${stock.expected_return}%`}
+                    color="#38bdf8"
+                  />
+
+                </div>
+
+                <div style={styles.sellBox}>
+                  📌 {stock.sell_at}
+                </div>
+
+                <div style={styles.reasonRow}>
+
+                  {stock.reasons.map(
+                    (r, idx) => (
+
+                      <div
+                        key={idx}
+                        style={styles.reason}
+                      >
+                        {r}
+                      </div>
+                    )
+                  )}
+
+                </div>
+              </div>
             )
           )}
+
         </div>
       )}
     </div>
   );
 }
 
-function Card({
+function SummaryCard({
   title,
   value,
   color = "white"
@@ -268,27 +212,15 @@ function Card({
 
   return (
 
-    <div
-      style={{
-        background: "#071226",
-        padding: 20,
-        borderRadius: 16
-      }}
-    >
+    <div style={styles.summaryCard}>
 
-      <div
-        style={{
-          color: "#94a3b8",
-          marginBottom: 10
-        }}
-      >
+      <div style={styles.summaryTitle}>
         {title}
       </div>
 
       <div
         style={{
-          fontSize: 34,
-          fontWeight: "bold",
+          ...styles.summaryValue,
           color
         }}
       >
@@ -309,19 +241,13 @@ function Metric({
 
     <div>
 
-      <div
-        style={{
-          color: "#94a3b8",
-          marginBottom: 8
-        }}
-      >
+      <div style={styles.metricLabel}>
         {label}
       </div>
 
       <div
         style={{
-          fontSize: 28,
-          fontWeight: "bold",
+          ...styles.metricValue,
           color
         }}
       >
@@ -331,3 +257,237 @@ function Metric({
     </div>
   );
 }
+
+const styles = {
+
+  page: {
+
+    background:
+      "linear-gradient(to bottom,#020617,#0f172a)",
+
+    minHeight: "100vh",
+
+    color: "white",
+
+    padding: 30,
+
+    fontFamily: "Inter"
+  },
+
+  hero: {
+
+    marginBottom: 40
+  },
+
+  title: {
+
+    fontSize: 48,
+
+    fontWeight: 900,
+
+    marginBottom: 10
+  },
+
+  subtitle: {
+
+    color: "#94a3b8",
+
+    marginBottom: 30
+  },
+
+  inputRow: {
+
+    display: "flex",
+
+    gap: 20
+  },
+
+  input: {
+
+    padding: 18,
+
+    width: 300,
+
+    borderRadius: 14,
+
+    border: "1px solid #334155",
+
+    background: "#0f172a",
+
+    color: "white",
+
+    fontSize: 20
+  },
+
+  button: {
+
+    padding: "18px 30px",
+
+    border: "none",
+
+    borderRadius: 14,
+
+    background:
+      "linear-gradient(to right,#22c55e,#16a34a)",
+
+    color: "white",
+
+    fontWeight: 700,
+
+    fontSize: 18,
+
+    cursor: "pointer"
+  },
+
+  summaryGrid: {
+
+    display: "grid",
+
+    gridTemplateColumns:
+      "repeat(auto-fit,minmax(250px,1fr))",
+
+    gap: 20,
+
+    marginBottom: 30
+  },
+
+  summaryCard: {
+
+    background: "#0f172a",
+
+    padding: 25,
+
+    borderRadius: 20,
+
+    border: "1px solid #1e293b"
+  },
+
+  summaryTitle: {
+
+    color: "#94a3b8",
+
+    marginBottom: 10
+  },
+
+  summaryValue: {
+
+    fontSize: 38,
+
+    fontWeight: 900
+  },
+
+  stockCard: {
+
+    background: "#0f172a",
+
+    padding: 30,
+
+    borderRadius: 22,
+
+    border: "1px solid #1e293b",
+
+    marginBottom: 25
+  },
+
+  stockTop: {
+
+    display: "flex",
+
+    justifyContent:
+      "space-between",
+
+    marginBottom: 25
+  },
+
+  stockName: {
+
+    fontSize: 34,
+
+    fontWeight: 900
+  },
+
+  buyBadge: {
+
+    marginTop: 10,
+
+    display: "inline-block",
+
+    padding: "8px 16px",
+
+    borderRadius: 10,
+
+    background: "#22c55e22",
+
+    color: "#22c55e",
+
+    fontWeight: 700
+  },
+
+  score: {
+
+    fontSize: 22,
+
+    fontWeight: 800,
+
+    color: "#38bdf8"
+  },
+
+  metricGrid: {
+
+    display: "grid",
+
+    gridTemplateColumns:
+      "repeat(auto-fit,minmax(180px,1fr))",
+
+    gap: 25,
+
+    marginBottom: 25
+  },
+
+  metricLabel: {
+
+    color: "#94a3b8",
+
+    marginBottom: 8
+  },
+
+  metricValue: {
+
+    fontSize: 28,
+
+    fontWeight: 800
+  },
+
+  sellBox: {
+
+    background: "#071226",
+
+    padding: 18,
+
+    borderRadius: 14,
+
+    marginBottom: 20,
+
+    color: "#f8fafc"
+  },
+
+  reasonRow: {
+
+    display: "flex",
+
+    flexWrap: "wrap",
+
+    gap: 10
+  },
+
+  reason: {
+
+    background: "#1e293b",
+
+    padding: "10px 14px",
+
+    borderRadius: 10,
+
+    color: "#cbd5e1"
+  }
+};
