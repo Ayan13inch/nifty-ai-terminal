@@ -3,218 +3,170 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>N50 NEXUS — Nifty 50 Intelligence</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:wght@700&display=swap" rel="stylesheet" />
+  <title>N50 NEXUS — Nifty 50 Live</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 
   <style>
     :root {
-      --bg: #0a0b0f;
+      --bg: #05070f;
+      --card: #0f1626;
       --accent: #00d4ff;
-      --green: #00ff9d;
-      --red: #ff3b5c;
-      --text: #e0e7ff;
-      --text-light: #a5b4fc;
+      --green: #00ff88;
+      --red: #ff3366;
     }
-
-    * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       background: var(--bg);
-      color: var(--text);
-      font-family: 'Inter', sans-serif;
-      line-height: 1.6;
-      overflow-x: hidden;
+      color: #ddd;
+      font-family: 'Share Tech Mono', monospace;
+      margin: 0;
+      padding: 0;
     }
+    .container { max-width: 1400px; margin: 0 auto; padding: 0 15px; }
 
-    /* Elegant Background */
-    body::before {
-      content: '';
-      position: fixed;
-      inset: 0;
-      background: linear-gradient(135deg, rgba(0, 212, 255, 0.08), rgba(0, 255, 157, 0.05));
-      z-index: -1;
-      opacity: 0.6;
+    header {
+      background: rgba(10,15,35,0.9);
+      padding: 20px 0;
+      border-bottom: 1px solid var(--accent);
+      position: sticky; top: 0; z-index: 100;
     }
-
-    .header {
-      padding: 40px 5%;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 1px solid rgba(0, 212, 255, 0.15);
-    }
-
     .logo {
-      font-family: 'Playfair Display', serif;
-      font-size: 42px;
-      font-weight: 700;
-      letter-spacing: -2px;
-      color: white;
-    }
-
-    .tagline {
-      font-size: 13px;
-      letter-spacing: 3px;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 28px;
       color: var(--accent);
-      margin-top: 4px;
     }
 
-    .main-content {
-      max-width: 1400px;
-      margin: 0 auto;
-      padding: 60px 5%;
-    }
-
+    .section { margin: 40px 0; }
     .section-title {
-      font-size: 15px;
-      letter-spacing: 4px;
+      font-family: 'Orbitron', sans-serif;
       color: var(--accent);
       margin-bottom: 20px;
-      text-transform: uppercase;
+      font-size: 18px;
     }
 
-    /* Top Signals */
     .top5-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 24px;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
     }
-
     .stock-card {
-      background: rgba(255,255,255,0.03);
-      border: 1px solid rgba(0,212,255,0.2);
-      border-radius: 20px;
-      padding: 28px 24px;
-      transition: all 0.4s ease;
+      background: var(--card);
+      padding: 18px;
+      border-radius: 12px;
+      border: 1px solid #1e2a4d;
     }
 
-    .stock-card:hover {
-      transform: translateY(-8px);
-      border-color: var(--accent);
-      box-shadow: 0 20px 40px rgba(0, 212, 255, 0.15);
-    }
-
-    /* Portfolio Engine */
     .portfolio-engine {
-      background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(0,212,255,0.2);
-      border-radius: 24px;
-      padding: 50px 40px;
+      background: var(--card);
+      padding: 30px;
+      border-radius: 12px;
       text-align: center;
-      margin: 60px 0;
+      border: 1px solid var(--accent);
     }
-
     .budget-input {
-      font-size: 42px;
+      font-size: 32px;
       background: transparent;
-      border: none;
+      border: 2px solid var(--accent);
       color: white;
       text-align: center;
+      padding: 12px;
+      border-radius: 8px;
       width: 100%;
-      max-width: 400px;
-      margin: 20px auto;
-      border-bottom: 2px solid var(--accent);
+      max-width: 350px;
     }
-
     .analyze-btn {
-      margin-top: 30px;
-      padding: 18px 60px;
-      font-size: 16px;
-      letter-spacing: 2px;
-      background: linear-gradient(to right, #00ff9d, #00d4ff);
+      margin-top: 20px;
+      padding: 16px 40px;
+      background: var(--green);
       color: black;
+      font-weight: bold;
       border: none;
-      border-radius: 50px;
-      font-weight: 600;
+      border-radius: 8px;
       cursor: pointer;
-      transition: all 0.3s;
+      font-size: 16px;
     }
 
-    .analyze-btn:hover {
-      transform: scale(1.05);
-    }
+    .portfolio-section { display: none; }
+    .portfolio-section.visible { display: block; }
 
-    /* Table */
-    .table-container {
-      background: rgba(255,255,255,0.03);
-      border-radius: 20px;
-      overflow: hidden;
-      border: 1px solid rgba(0,212,255,0.15);
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--card);
     }
+    th, td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid #1e2a4d;
+    }
+    th { background: #0a0f1f; color: var(--accent); }
 
     footer {
       text-align: center;
-      padding: 40px 20px;
-      color: #64748b;
-      font-size: 13px;
-      border-top: 1px solid rgba(255,255,255,0.08);
+      padding: 30px;
+      color: #666;
+      font-size: 12px;
     }
   </style>
 </head>
 <body>
 
-<div class="header">
-  <div>
+<header>
+  <div class="container" style="display:flex; justify-content:space-between; align-items:center;">
     <div class="logo">N50 NEXUS</div>
-    <div class="tagline">NIFTY FIFTY • LIVE INTELLIGENCE</div>
+    <div style="color:var(--green);">● LIVE MARKET</div>
   </div>
-  <div style="color: var(--green); font-weight: 500;">● MARKET OPEN</div>
-</div>
+</header>
 
-<div class="main-content">
+<div class="container">
 
   <!-- Top Signals -->
-  <div>
-    <div class="section-title">Strongest Signals Today</div>
+  <div class="section">
+    <div class="section-title">TOP SIGNALS TODAY</div>
     <div class="top5-grid" id="top5Grid"></div>
   </div>
 
   <!-- Portfolio Engine -->
-  <div class="portfolio-engine">
-    <h2 style="font-size:28px; margin-bottom:10px;">Build Your Portfolio</h2>
-    <p style="color: var(--text-light);">Enter your investment amount</p>
-    
+  <div class="section portfolio-engine">
+    <h2 style="margin-bottom:10px;">Portfolio Engine</h2>
+    <p style="margin-bottom:20px; color:#aaa;">Enter Budget (₹)</p>
     <input type="number" id="budgetInput" class="budget-input" placeholder="50000" />
-    
+    <br>
     <button class="analyze-btn" id="analyzeBtn" onclick="runAnalysis()">
-      GENERATE OPTIMAL PORTFOLIO
+      ANALYZE & BUILD PORTFOLIO
     </button>
   </div>
 
   <!-- Portfolio Results -->
-  <div class="portfolio-section" id="portfolioSection" style="display:none;">
-    <div class="section-title">Recommended Portfolio</div>
-    <div id="portSummary"></div>
+  <div class="section portfolio-section" id="portfolioSection">
+    <div class="section-title">RECOMMENDED PORTFOLIO</div>
+    <div id="portSummary" style="display:flex; gap:30px; flex-wrap:wrap; margin-bottom:20px;"></div>
     <div id="portfolioRows"></div>
   </div>
 
-  <!-- Full Scan -->
-  <div>
-    <div class="section-title">Live Market Scan</div>
-    <div class="table-container">
-      <table class="stocks-table" id="stocksTable" style="width:100%; border-collapse:collapse;">
-        <thead>
-          <tr style="background:rgba(0,0,0,0.4);">
-            <th style="padding:18px; text-align:left;">Symbol</th>
-            <th style="padding:18px;">Price</th>
-            <th style="padding:18px;">Change</th>
-            <th style="padding:18px;">RSI</th>
-            <th style="padding:18px;">Score</th>
-            <th style="padding:18px;">Signal</th>
-          </tr>
-        </thead>
-        <tbody id="stocksTbody"></tbody>
-      </table>
-    </div>
+  <!-- Full Table -->
+  <div class="section">
+    <div class="section-title">NIFTY 50 LIVE SCAN</div>
+    <table id="stocksTable">
+      <thead>
+        <tr>
+          <th>Symbol</th>
+          <th>Price</th>
+          <th>Change %</th>
+          <th>RSI</th>
+          <th>Score</th>
+          <th>Signal</th>
+        </tr>
+      </thead>
+      <tbody id="stocksTbody"></tbody>
+    </table>
   </div>
 
 </div>
 
 <footer>
-  <div>⚠ For Educational Purposes Only • Not Financial Advice</div>
-  <div style="margin-top:12px;">
-    Created by <strong>Ayan Bhowmick</strong> • 
-    <a href="mailto:ayaandeep9051@gmail.com" style="color:var(--accent);">ayaandeep9051@gmail.com</a>
+  <div>⚠ Educational Purposes Only • Not Financial Advice</div>
+  <div>Created by <strong>Ayan Bhowmick</strong> • 
+    <a href="mailto:ayaandeep9051@gmail.com" style="color:var(--accent)">ayaandeep9051@gmail.com</a>
   </div>
 </footer>
 
