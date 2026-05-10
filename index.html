@@ -3,80 +3,88 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>N50 NEXUS — Nifty 50 Live</title>
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  <title>N50 NEXUS — Nifty 50 Live Intelligence</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 
   <style>
     :root {
-      --bg: #05070f;
-      --card: #0f1626;
+      --bg: #020508;
+      --glass: rgba(15, 25, 45, 0.85);
       --accent: #00d4ff;
       --green: #00ff88;
       --red: #ff3366;
     }
     body {
       background: var(--bg);
-      color: #ddd;
+      color: #c8dde8;
       font-family: 'Share Tech Mono', monospace;
       margin: 0;
       padding: 0;
+      background-image: linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px),
+                        linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px);
+      background-size: 60px 60px;
     }
-    .container { max-width: 1400px; margin: 0 auto; padding: 0 15px; }
+
+    .glass {
+      background: var(--glass);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(0,212,255,0.25);
+      border-radius: 12px;
+    }
 
     header {
-      background: rgba(10,15,35,0.9);
-      padding: 20px 0;
+      padding: 20px 15px;
+      background: rgba(5,10,25,0.95);
       border-bottom: 1px solid var(--accent);
-      position: sticky; top: 0; z-index: 100;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
     }
     .logo {
       font-family: 'Orbitron', sans-serif;
       font-size: 28px;
       color: var(--accent);
-    }
-
-    .section { margin: 40px 0; }
-    .section-title {
-      font-family: 'Orbitron', sans-serif;
-      color: var(--accent);
-      margin-bottom: 20px;
-      font-size: 18px;
+      letter-spacing: 4px;
     }
 
     .top5-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
       gap: 16px;
+      padding: 20px 15px;
     }
     .stock-card {
-      background: var(--card);
       padding: 18px;
       border-radius: 12px;
-      border: 1px solid #1e2a4d;
+      transition: 0.3s;
     }
+    .stock-card:hover { transform: translateY(-8px); }
 
     .portfolio-engine {
-      background: var(--card);
-      padding: 30px;
-      border-radius: 12px;
+      margin: 20px 15px;
+      padding: 30px 20px;
       text-align: center;
-      border: 1px solid var(--accent);
     }
+
     .budget-input {
       font-size: 32px;
+      width: 100%;
+      max-width: 380px;
       background: transparent;
       border: 2px solid var(--accent);
       color: white;
       text-align: center;
       padding: 12px;
       border-radius: 8px;
-      width: 100%;
-      max-width: 350px;
     }
+
     .analyze-btn {
       margin-top: 20px;
-      padding: 16px 40px;
-      background: var(--green);
+      padding: 16px 50px;
+      background: linear-gradient(#00ff88, #00cc66);
       color: black;
       font-weight: bold;
       border: none;
@@ -85,25 +93,21 @@
       font-size: 16px;
     }
 
-    .portfolio-section { display: none; }
-    .portfolio-section.visible { display: block; }
-
     table {
       width: 100%;
       border-collapse: collapse;
-      background: var(--card);
+      background: var(--glass);
     }
     th, td {
-      padding: 12px;
+      padding: 12px 10px;
       text-align: left;
-      border-bottom: 1px solid #1e2a4d;
     }
-    th { background: #0a0f1f; color: var(--accent); }
+    th { background: #0a1328; color: var(--accent); }
 
     footer {
       text-align: center;
-      padding: 30px;
-      color: #666;
+      padding: 25px;
+      color: #555;
       font-size: 12px;
     }
   </style>
@@ -111,24 +115,21 @@
 <body>
 
 <header>
-  <div class="container" style="display:flex; justify-content:space-between; align-items:center;">
-    <div class="logo">N50 NEXUS</div>
-    <div style="color:var(--green);">● LIVE MARKET</div>
-  </div>
+  <div class="logo">N50 NEXUS</div>
+  <div style="color:var(--green)">● LIVE</div>
 </header>
 
-<div class="container">
+<div style="max-width:1400px; margin:0 auto; padding:15px;">
 
   <!-- Top Signals -->
-  <div class="section">
-    <div class="section-title">TOP SIGNALS TODAY</div>
+  <div style="margin-bottom:30px">
+    <h2 style="color:var(--accent); margin-bottom:15px;">TOP SIGNALS</h2>
     <div class="top5-grid" id="top5Grid"></div>
   </div>
 
   <!-- Portfolio Engine -->
-  <div class="section portfolio-engine">
+  <div class="glass portfolio-engine">
     <h2 style="margin-bottom:10px;">Portfolio Engine</h2>
-    <p style="margin-bottom:20px; color:#aaa;">Enter Budget (₹)</p>
     <input type="number" id="budgetInput" class="budget-input" placeholder="50000" />
     <br>
     <button class="analyze-btn" id="analyzeBtn" onclick="runAnalysis()">
@@ -137,37 +138,38 @@
   </div>
 
   <!-- Portfolio Results -->
-  <div class="section portfolio-section" id="portfolioSection">
-    <div class="section-title">RECOMMENDED PORTFOLIO</div>
-    <div id="portSummary" style="display:flex; gap:30px; flex-wrap:wrap; margin-bottom:20px;"></div>
+  <div class="glass portfolio-section" id="portfolioSection" style="margin:20px 15px; padding:25px; display:none;">
+    <h2 style="color:var(--accent)">Recommended Portfolio</h2>
+    <div id="portSummary" style="margin:20px 0;"></div>
     <div id="portfolioRows"></div>
   </div>
 
-  <!-- Full Table -->
-  <div class="section">
-    <div class="section-title">NIFTY 50 LIVE SCAN</div>
-    <table id="stocksTable">
-      <thead>
-        <tr>
-          <th>Symbol</th>
-          <th>Price</th>
-          <th>Change %</th>
-          <th>RSI</th>
-          <th>Score</th>
-          <th>Signal</th>
-        </tr>
-      </thead>
-      <tbody id="stocksTbody"></tbody>
-    </table>
+  <!-- Live Table -->
+  <div>
+    <h2 style="color:var(--accent); margin:20px 0 15px;">NIFTY 50 LIVE SCAN</h2>
+    <div class="glass" style="overflow-x:auto;">
+      <table id="stocksTable">
+        <thead>
+          <tr>
+            <th>Symbol</th>
+            <th>Price</th>
+            <th>Change</th>
+            <th>RSI</th>
+            <th>Score</th>
+            <th>Signal</th>
+          </tr>
+        </thead>
+        <tbody id="stocksTbody"></tbody>
+      </table>
+    </div>
   </div>
 
 </div>
 
 <footer>
-  <div>⚠ Educational Purposes Only • Not Financial Advice</div>
-  <div>Created by <strong>Ayan Bhowmick</strong> • 
-    <a href="mailto:ayaandeep9051@gmail.com" style="color:var(--accent)">ayaandeep9051@gmail.com</a>
-  </div>
+  ⚠ For Educational Purposes Only • Not Financial Advice<br><br>
+  Created by <strong>Ayan Bhowmick</strong><br>
+  <a href="mailto:ayaandeep9051@gmail.com" style="color:var(--accent)">ayaandeep9051@gmail.com</a>
 </footer>
 
 <script src="app.js"></script>
