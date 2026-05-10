@@ -15,30 +15,41 @@ export default function App() {
   const [loading, setLoading] =
     useState(false);
 
+  const [error, setError] =
+    useState("");
+
   const fetchStocks = async () => {
 
     try {
 
       setLoading(true);
 
-      const res = await axios.get(
+      setError("");
 
+      const res = await axios.get(
         `${BACKEND}/recommend/${budget}`
       );
 
-      setData(res.data);
+      console.log("API:", res.data);
+
+      setData(res.data || {});
 
     } catch (e) {
 
       console.log(e);
 
-      alert("Backend Error");
+      setError(
+        "Backend fetch failed"
+      );
 
     } finally {
 
       setLoading(false);
     }
   };
+
+  const recommendations =
+    data?.recommendations || [];
 
   return (
 
@@ -51,7 +62,7 @@ export default function App() {
         </h1>
 
         <p style={styles.subtitle}>
-          Live Nifty 50 AI Scanner
+          Live Nifty 50 Scanner
         </p>
 
         <div style={styles.inputRow}>
@@ -67,8 +78,6 @@ export default function App() {
             }
 
             style={styles.input}
-
-            placeholder="Enter INR Budget"
           />
 
           <button
@@ -85,6 +94,13 @@ export default function App() {
         </div>
       </div>
 
+      {error && (
+
+        <div style={styles.error}>
+          {error}
+        </div>
+      )}
+
       {data && (
 
         <div>
@@ -93,111 +109,120 @@ export default function App() {
 
             <SummaryCard
               title="Capital"
-              value={`₹${data.capital}`}
+              value={`₹${data.capital || 0}`}
             />
 
             <SummaryCard
               title="Invested"
-              value={`₹${data.invested}`}
+              value={`₹${data.invested || 0}`}
               color="#22c55e"
             />
 
             <SummaryCard
               title="Remaining"
-              value={`₹${data.remaining}`}
+              value={`₹${data.remaining || 0}`}
               color="#f59e0b"
             />
 
           </div>
 
-          {data.recommendations.map(
-            (stock, i) => (
+          {recommendations.length === 0 ? (
 
-              <div
-                key={i}
-                style={styles.stockCard}
-              >
+            <div style={styles.empty}>
+              No strong stocks found right now
+            </div>
 
-                <div style={styles.stockTop}>
+          ) : (
 
-                  <div>
+            recommendations.map(
+              (stock, i) => (
 
-                    <h2 style={styles.stockName}>
-                      {stock.stock}
-                    </h2>
+                <div
+                  key={i}
+                  style={styles.stockCard}
+                >
 
-                    <div style={styles.buyBadge}>
-                      {stock.signal}
+                  <div style={styles.stockTop}>
+
+                    <div>
+
+                      <h2 style={styles.stockName}>
+                        {stock.stock || "-"}
+                      </h2>
+
+                      <div style={styles.buyBadge}>
+                        {stock.signal || "BUY"}
+                      </div>
+
+                    </div>
+
+                    <div style={styles.score}>
+                      AI Score {stock.score || 0}
                     </div>
 
                   </div>
 
-                  <div style={styles.score}>
-                    AI Score {stock.score}
+                  <div style={styles.metricGrid}>
+
+                    <Metric
+                      label="Price"
+                      value={`₹${stock.price || 0}`}
+                    />
+
+                    <Metric
+                      label="Qty"
+                      value={stock.qty || 0}
+                    />
+
+                    <Metric
+                      label="Invested"
+                      value={`₹${stock.invested || 0}`}
+                    />
+
+                    <Metric
+                      label="Target"
+                      value={`₹${stock.target || 0}`}
+                      color="#22c55e"
+                    />
+
+                    <Metric
+                      label="Stop Loss"
+                      value={`₹${stock.stop_loss || 0}`}
+                      color="#ef4444"
+                    />
+
+                    <Metric
+                      label="Expected Return"
+                      value={`${stock.expected_return || 0}%`}
+                      color="#38bdf8"
+                    />
+
+                  </div>
+
+                  <div style={styles.sellBox}>
+                    📌 {stock.sell_at || "-"}
+                  </div>
+
+                  <div style={styles.reasonRow}>
+
+                    {(stock.reasons || []).map(
+                      (r, idx) => (
+
+                        <div
+                          key={idx}
+                          style={styles.reason}
+                        >
+                          {r}
+                        </div>
+                      )
+                    )}
+
                   </div>
 
                 </div>
-
-                <div style={styles.metricGrid}>
-
-                  <Metric
-                    label="Price"
-                    value={`₹${stock.price}`}
-                  />
-
-                  <Metric
-                    label="Quantity"
-                    value={stock.qty}
-                  />
-
-                  <Metric
-                    label="Invested"
-                    value={`₹${stock.invested}`}
-                  />
-
-                  <Metric
-                    label="Target"
-                    value={`₹${stock.target}`}
-                    color="#22c55e"
-                  />
-
-                  <Metric
-                    label="Stop Loss"
-                    value={`₹${stock.stop_loss}`}
-                    color="#ef4444"
-                  />
-
-                  <Metric
-                    label="Expected Return"
-                    value={`${stock.expected_return}%`}
-                    color="#38bdf8"
-                  />
-
-                </div>
-
-                <div style={styles.sellBox}>
-                  📌 {stock.sell_at}
-                </div>
-
-                <div style={styles.reasonRow}>
-
-                  {stock.reasons.map(
-                    (r, idx) => (
-
-                      <div
-                        key={idx}
-                        style={styles.reason}
-                      >
-                        {r}
-                      </div>
-                    )
-                  )}
-
-                </div>
-              </div>
+              )
             )
           )}
-
         </div>
       )}
     </div>
@@ -281,7 +306,7 @@ const styles = {
 
   title: {
 
-    fontSize: 48,
+    fontSize: 50,
 
     fontWeight: 900,
 
@@ -292,14 +317,18 @@ const styles = {
 
     color: "#94a3b8",
 
-    marginBottom: 30
+    marginBottom: 30,
+
+    fontSize: 18
   },
 
   inputRow: {
 
     display: "flex",
 
-    gap: 20
+    gap: 20,
+
+    flexWrap: "wrap"
   },
 
   input: {
@@ -308,7 +337,7 @@ const styles = {
 
     width: 300,
 
-    borderRadius: 14,
+    borderRadius: 16,
 
     border: "1px solid #334155",
 
@@ -325,18 +354,42 @@ const styles = {
 
     border: "none",
 
-    borderRadius: 14,
+    borderRadius: 16,
 
     background:
       "linear-gradient(to right,#22c55e,#16a34a)",
 
     color: "white",
 
-    fontWeight: 700,
+    fontWeight: 800,
 
     fontSize: 18,
 
     cursor: "pointer"
+  },
+
+  error: {
+
+    background: "#450a0a",
+
+    padding: 20,
+
+    borderRadius: 16,
+
+    color: "#fecaca",
+
+    marginBottom: 20
+  },
+
+  empty: {
+
+    background: "#0f172a",
+
+    padding: 30,
+
+    borderRadius: 20,
+
+    fontSize: 22
   },
 
   summaryGrid: {
@@ -357,7 +410,7 @@ const styles = {
 
     padding: 25,
 
-    borderRadius: 20,
+    borderRadius: 22,
 
     border: "1px solid #1e293b"
   },
@@ -382,7 +435,7 @@ const styles = {
 
     padding: 30,
 
-    borderRadius: 22,
+    borderRadius: 24,
 
     border: "1px solid #1e293b",
 
@@ -395,6 +448,8 @@ const styles = {
 
     justifyContent:
       "space-between",
+
+    alignItems: "center",
 
     marginBottom: 25
   },
@@ -414,7 +469,7 @@ const styles = {
 
     padding: "8px 16px",
 
-    borderRadius: 10,
+    borderRadius: 12,
 
     background: "#22c55e22",
 
@@ -427,7 +482,7 @@ const styles = {
 
     fontSize: 22,
 
-    fontWeight: 800,
+    fontWeight: 900,
 
     color: "#38bdf8"
   },
@@ -455,7 +510,7 @@ const styles = {
 
     fontSize: 28,
 
-    fontWeight: 800
+    fontWeight: 900
   },
 
   sellBox: {
@@ -466,9 +521,7 @@ const styles = {
 
     borderRadius: 14,
 
-    marginBottom: 20,
-
-    color: "#f8fafc"
+    marginBottom: 20
   },
 
   reasonRow: {
@@ -486,7 +539,7 @@ const styles = {
 
     padding: "10px 14px",
 
-    borderRadius: 10,
+    borderRadius: 12,
 
     color: "#cbd5e1"
   }
