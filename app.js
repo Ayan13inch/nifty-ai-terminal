@@ -1,6 +1,10 @@
 const API_BASE = "https://n50-nexus-api.onrender.com";
 let allStocks = [];
 
+function createSparkline(data) {
+  return `<canvas width="120" height="50" class="sparkline" data-points="${data.join(',')}"></canvas>`;
+}
+
 async function loadTop5() {
   try {
     const res = await fetch(API_BASE + "/api/top5");
@@ -11,9 +15,10 @@ async function loadTop5() {
       const card = document.createElement('div');
       card.className = 'glass stock-card';
       card.innerHTML = `
-        <strong>${stock.symbol}</strong><br>
-        ₹${stock.price} <span style="color:${stock.change_pct >= 0 ? '#00ff9d' : '#ff3b5c'}">(${stock.change_pct}%)</span><br>
+        <strong style="font-size:18px">${stock.symbol}</strong><br>
+        ₹${stock.price} <span style="color:${stock.change_pct >= 0 ? '#39ff14' : '#ff00aa'}">(${stock.change_pct}%)</span><br>
         <span style="color:${stock.color}">${stock.action}</span>
+        ${createSparkline(stock.sparkline)}
       `;
       container.appendChild(card);
     });
@@ -37,9 +42,11 @@ function renderTable(stocks) {
     tr.innerHTML = `
       <td><strong>${s.symbol}</strong></td>
       <td>₹${s.price}</td>
-      <td style="color:${s.change_pct>=0?'#00ff9d':'#ff3b5c'}">${s.change_pct}%</td>
+      <td style="color:${s.change_pct>=0?'#39ff14':'#ff00aa'}">${s.change_pct}%</td>
+      <td>${s.rsi}</td>
       <td>${s.score}</td>
       <td style="color:${s.color}">${s.action}</td>
+      <td>${createSparkline(s.sparkline)}</td>
     `;
     tbody.appendChild(tr);
   });
@@ -59,32 +66,27 @@ async function runAnalysis() {
     });
     const data = await res.json();
 
-    document.getElementById('portfolioSection').classList.add('visible');
-
-    // Summary
+    document.getElementById('portfolioSection').style.display = 'block';
     document.getElementById('portSummary').innerHTML = `
-      <strong>Total Invested:</strong> ₹${data.total_invested.toLocaleString('en-IN')}<br>
-      <strong>Potential Gain:</strong> <span style="color:#00ff9d">₹${data.total_potential_gain.toLocaleString('en-IN')}</span>
+      <strong>Invested:</strong> ₹${data.total_invested}<br>
+      <strong>Potential Gain:</strong> <span style="color:#39ff14">₹${data.total_potential_gain}</span>
     `;
 
-    // Portfolio Rows with Stop Loss
     const rowsDiv = document.getElementById('portfolioRows');
     rowsDiv.innerHTML = '';
     data.portfolio.forEach(stock => {
       const div = document.createElement('div');
-      div.className = 'glass';
-      div.style.padding = "16px";
-      div.style.marginBottom = "12px";
+      div.className = 'port-row glass';
       div.innerHTML = `
         <strong>${stock.symbol}</strong> × ${stock.qty} @ ₹${stock.price}<br>
-        <span style="color:#00ff9d">Target: ₹${stock.target}</span> | 
-        <span style="color:#ff3b5c">Stop Loss: ₹${stock.stop_loss}</span>
+        Target: <span style="color:#39ff14">₹${stock.target}</span> | 
+        Stop Loss: <span style="color:#ff00aa">₹${stock.stop_loss}</span>
       `;
       rowsDiv.appendChild(div);
     });
 
   } catch (e) {
-    alert("Failed to generate portfolio");
+    alert("Error generating portfolio");
   } finally {
     btn.textContent = "ANALYZE & BUILD PORTFOLIO";
     btn.disabled = false;
