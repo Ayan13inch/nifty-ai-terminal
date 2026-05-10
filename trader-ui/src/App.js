@@ -1,734 +1,288 @@
-import React, {
-  useEffect,
-  useState,
-  useMemo
-} from "react";
-
+import React, { useEffect, useState } from "react";
 import axios from "axios";
 
-// ─────────────────────────────────────────────
-// CONFIG
-// ─────────────────────────────────────────────
-const API_BASE =
-  "https://nifty-ai-terminal.onrender.com";
+const API_URL = "https://nifty-ai-terminal.onrender.com/scan";
 
-const API_URL =
-  `${API_BASE}/scan`;
-
-const RECOMMEND_URL =
-  `${API_BASE}/recommend`;
-
-const TOTAL_ROWS = 10;
-
-// ─────────────────────────────────────────────
-// STYLES
-// ─────────────────────────────────────────────
-const S = {
-
+const styles = {
   page: {
-    background: "#080f1e",
+    background: "#020817",
     minHeight: "100vh",
-    color: "#e2e8f0",
-    padding: 24,
-    fontFamily: "Inter"
+    color: "white",
+    padding: 20,
+    fontFamily: "Inter, sans-serif"
+  },
+
+  title: {
+    fontSize: 34,
+    fontWeight: 800,
+    marginBottom: 20
+  },
+
+  cardRow: {
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr 1fr",
+    gap: 20,
+    marginTop: 20,
+    marginBottom: 30
   },
 
   card: {
-    background: "#0f172a",
-    padding: 20,
-    borderRadius: 12,
-    marginBottom: 20,
-    border: "1px solid #1e293b"
+    background: "#071226",
+    border: "1px solid #1e293b",
+    borderRadius: 16,
+    padding: 24
   },
 
-  button: {
-    padding: "10px 16px",
-    border: "none",
-    borderRadius: 8,
-    fontWeight: 700,
-    cursor: "pointer"
+  label: {
+    color: "#94a3b8",
+    fontSize: 14,
+    marginBottom: 8
+  },
+
+  value: {
+    fontSize: 32,
+    fontWeight: 800
+  },
+
+  inputRow: {
+    display: "flex",
+    gap: 16,
+    marginBottom: 30
   },
 
   input: {
     flex: 1,
-    padding: 12,
-    background: "#1e293b",
+    padding: 18,
+    borderRadius: 12,
     border: "1px solid #334155",
-    borderRadius: 8,
-    color: "#fff",
-    fontSize: 15
+    background: "#0f172a",
+    color: "white",
+    fontSize: 18
+  },
+
+  button: {
+    padding: "18px 28px",
+    borderRadius: 12,
+    border: "none",
+    background: "#22c55e",
+    color: "black",
+    fontWeight: 700,
+    cursor: "pointer",
+    fontSize: 16
+  },
+
+  stockCard: {
+    background: "#071226",
+    border: "1px solid #1e293b",
+    borderRadius: 18,
+    padding: 24,
+    marginBottom: 20
+  },
+
+  stockTitle: {
+    fontSize: 26,
+    fontWeight: 800,
+    marginBottom: 10
+  },
+
+  grid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+    gap: 20,
+    marginTop: 20
+  },
+
+  metricLabel: {
+    color: "#94a3b8",
+    fontSize: 13
+  },
+
+  metricValue: {
+    fontSize: 24,
+    fontWeight: 700,
+    marginTop: 6
   }
 };
 
-// ─────────────────────────────────────────────
-// SIGNAL BADGE
-// ─────────────────────────────────────────────
-function SignalBadge({ signal }) {
-
-  const cfg = {
-
-    BUY: {
-      bg: "#22c55e22",
-      color: "#22c55e"
-    },
-
-    SELL: {
-      bg: "#ef444422",
-      color: "#ef4444"
-    },
-
-    HOLD: {
-      bg: "#f59e0b22",
-      color: "#f59e0b"
-    }
-  };
-
-  const c = cfg[signal] || cfg.HOLD;
-
-  return (
-
-    <span
-      style={{
-        padding: "4px 10px",
-        borderRadius: 6,
-        background: c.bg,
-        color: c.color,
-        fontWeight: 700
-      }}
-    >
-      {signal}
-    </span>
-  );
-}
-
-// ─────────────────────────────────────────────
-// MAIN APP
-// ─────────────────────────────────────────────
 export default function App() {
+  const [stocks, setStocks] = useState([]);
+  const [amount, setAmount] = useState(10000);
 
-  const [data, setData] = useState([]);
+  const [invested, setInvested] = useState(0);
+  const [residual, setResidual] = useState(0);
 
-  const [filter, setFilter] = useState("ALL");
-
-  const [investmentAmount,
-    setInvestmentAmount] = useState("");
-
-  const [recommendations,
-    setRecommendations] = useState([]);
-
-  const [summary,
-    setSummary] = useState(null);
-
-  const [loading,
-    setLoading] = useState(false);
-
-  // ─────────────────────────────────────────
-  // FETCH STOCKS
-  // ─────────────────────────────────────────
   const fetchStocks = async () => {
-
     try {
+      const res = await axios.get(API_URL);
 
-      const res =
-        await axios.get(API_URL);
+      const data = Array.isArray(res.data) ? res.data : [];
 
-      setData(
-        Array.isArray(res.data)
-          ? res.data
-          : []
-      );
+      const buyStocks = data
+        .filter(
+          (s) =>
+            s &&
+            s.signal === "BUY" &&
+            s.price &&
+            s.confidence >= 50
+        )
+        .sort((a, b) => b.confidence - a.confidence)
+        .slice(0, 5);
 
+      if (buyStocks.length === 0) {
+        setStocks([]);
+        return;
+      }
+
+      const perStock = amount / buyStocks.length;
+
+      let totalInvested = 0;
+
+      const finalStocks = buyStocks.map((s) => {
+        const qty = Math.floor(perStock / s.price);
+
+        const investedAmount = qty * s.price;
+
+        totalInvested += investedAmount;
+
+        return {
+          ...s,
+          qty,
+          investedAmount,
+          target: (s.price * 1.05).toFixed(2),
+          stoploss: (s.price * 0.97).toFixed(2),
+          expectedProfit: (investedAmount * 0.05).toFixed(2)
+        };
+      });
+
+      setInvested(totalInvested.toFixed(2));
+      setResidual((amount - totalInvested).toFixed(2));
+
+      setStocks(finalStocks);
     } catch (err) {
-
       console.log(err);
+      alert("Backend not reachable");
     }
   };
 
-  // ─────────────────────────────────────────
-  // AUTO REFRESH
-  // ─────────────────────────────────────────
   useEffect(() => {
-
     fetchStocks();
-
-    const interval =
-      setInterval(() => {
-
-        fetchStocks();
-
-      }, 15000);
-
-    return () =>
-      clearInterval(interval);
-
   }, []);
 
-  // ─────────────────────────────────────────
-  // FETCH RECOMMENDATIONS
-  // ─────────────────────────────────────────
-  const fetchRecommendations =
-    async () => {
-
-    if (!investmentAmount) {
-
-      alert("Enter amount");
-
-      return;
-    }
-
-    try {
-
-      setLoading(true);
-
-      const res =
-        await axios.get(
-          `${RECOMMEND_URL}/${investmentAmount}`
-        );
-
-      setRecommendations(
-        res.data.recommendations || []
-      );
-
-      setSummary({
-
-        invested:
-          res.data.total_invested,
-
-        remaining:
-          res.data.remaining,
-
-        capital:
-          res.data.capital
-      });
-
-    } catch (err) {
-
-      console.log(err);
-
-      alert(
-        "Recommendation fetch failed"
-      );
-
-    } finally {
-
-      setLoading(false);
-    }
-  };
-
-  // ─────────────────────────────────────────
-  // FILTERED DATA
-  // ─────────────────────────────────────────
-  const displayRows =
-    useMemo(() => {
-
-    const filtered =
-      filter === "ALL"
-      ? data
-      : data.filter(
-          d => d.signal === filter
-        );
-
-    const rows = [...filtered];
-
-    while (
-      rows.length < TOTAL_ROWS
-    ) {
-
-      rows.push({
-        _placeholder: true
-      });
-    }
-
-    return rows;
-
-  }, [data, filter]);
-
-  // ─────────────────────────────────────────
-  // MARKET PULSE
-  // ─────────────────────────────────────────
-  const buyCount =
-    data.filter(
-      d => d.signal === "BUY"
-    ).length;
-
-  const sellCount =
-    data.filter(
-      d => d.signal === "SELL"
-    ).length;
-
-  const marketBullish =
-    buyCount > sellCount;
-
-  // ─────────────────────────────────────────
-  // UI
-  // ─────────────────────────────────────────
   return (
+    <div style={styles.page}>
+      <div style={styles.title}>🚀 AI Investment Planner</div>
 
-    <div style={S.page}>
+      <div style={styles.inputRow}>
+        <input
+          type="number"
+          value={amount}
+          onChange={(e) => setAmount(Number(e.target.value))}
+          style={styles.input}
+          placeholder="Enter Amount"
+        />
 
-      {/* HEADER */}
-      <div style={S.card}>
-
-        <h1>
-          NIFTY AI TERMINAL
-        </h1>
-
-        <div
-          style={{
-            color:
-              marketBullish
-              ? "#22c55e"
-              : "#ef4444",
-
-            fontWeight: 700
-          }}
-        >
-          {
-            marketBullish
-            ? "Bullish Momentum"
-            : "Bearish Pressure"
-          }
-        </div>
-
+        <button style={styles.button} onClick={fetchStocks}>
+          Find Stocks
+        </button>
       </div>
 
-      {/* INVESTMENT */}
-      <div style={S.card}>
-
-        <h2>
-          AI Investment Planner
-        </h2>
-
-        <div
-          style={{
-            display: "flex",
-            gap: 12,
-            marginTop: 16
-          }}
-        >
-
-          <input
-            type="number"
-            placeholder="Enter amount in INR"
-
-            value={investmentAmount}
-
-            onChange={(e) =>
-              setInvestmentAmount(
-                e.target.value
-              )
-            }
-
-            style={S.input}
-          />
-
-          <button
-
-            onClick={
-              fetchRecommendations
-            }
-
-            style={{
-              ...S.button,
-              background: "#22c55e",
-              color: "#000"
-            }}
-          >
-
-            {
-              loading
-              ? "Loading..."
-              : "Find Stocks"
-            }
-
-          </button>
-
+      <div style={styles.cardRow}>
+        <div style={styles.card}>
+          <div style={styles.label}>Total Capital</div>
+          <div style={styles.value}>₹{amount}</div>
         </div>
 
-      </div>
-
-      {/* SUMMARY */}
-      {
-        summary && (
-
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns:
-                "repeat(3,1fr)",
-
-              gap: 16,
-
-              marginBottom: 20
-            }}
-          >
-
-            <div style={S.card}>
-
-              <div>
-                Total Capital
-              </div>
-
-              <h2>
-                ₹{summary.capital}
-              </h2>
-
-            </div>
-
-            <div style={S.card}>
-
-              <div>
-                Total Invested
-              </div>
-
-              <h2
-                style={{
-                  color: "#22c55e"
-                }}
-              >
-                ₹{summary.invested}
-              </h2>
-
-            </div>
-
-            <div style={S.card}>
-
-              <div>
-                Residual Amount
-              </div>
-
-              <h2
-                style={{
-                  color: "#f59e0b"
-                }}
-              >
-                ₹{summary.remaining}
-              </h2>
-
-            </div>
-
+        <div style={styles.card}>
+          <div style={styles.label}>Total Invested</div>
+          <div style={{ ...styles.value, color: "#22c55e" }}>
+            ₹{invested}
           </div>
-        )
-      }
+        </div>
 
-      {/* RECOMMENDATIONS */}
-      {
-        recommendations.length > 0 && (
+        <div style={styles.card}>
+          <div style={styles.label}>Residual Amount</div>
+          <div style={{ ...styles.value, color: "#f59e0b" }}>
+            ₹{residual}
+          </div>
+        </div>
+      </div>
 
-          <div style={S.card}>
+      {stocks.length === 0 ? (
+        <div>No BUY opportunities found.</div>
+      ) : (
+        stocks.map((stock, index) => (
+          <div key={index} style={styles.stockCard}>
+            <div style={styles.stockTitle}>
+              {stock.stock}
+            </div>
 
-            <h2>
-              Recommended Stocks
-            </h2>
+            <div style={{ color: "#22c55e", fontWeight: 700 }}>
+              {stock.signal} • {stock.confidence}% Confidence
+            </div>
 
-            {
-              recommendations.map(
-                (r, i) => (
+            <div style={styles.grid}>
+              <div>
+                <div style={styles.metricLabel}>Buy Price</div>
+                <div style={styles.metricValue}>
+                  ₹{stock.price}
+                </div>
+              </div>
 
+              <div>
+                <div style={styles.metricLabel}>Quantity</div>
+                <div style={styles.metricValue}>
+                  {stock.qty}
+                </div>
+              </div>
+
+              <div>
+                <div style={styles.metricLabel}>Invested</div>
+                <div style={styles.metricValue}>
+                  ₹{stock.investedAmount.toFixed(2)}
+                </div>
+              </div>
+
+              <div>
+                <div style={styles.metricLabel}>Sell Target</div>
                 <div
-
-                  key={i}
-
                   style={{
-                    padding: "18px 0",
-                    borderBottom:
-                      "1px solid #1e293b"
+                    ...styles.metricValue,
+                    color: "#22c55e"
                   }}
                 >
-
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent:
-                        "space-between"
-                    }}
-                  >
-
-                    <div>
-
-                      <h3>
-                        {r.stock}
-                      </h3>
-
-                      <div>
-                        Qty: {r.qty}
-                      </div>
-
-                    </div>
-
-                    <div
-                      style={{
-                        textAlign: "right"
-                      }}
-                    >
-
-                      <h3
-                        style={{
-                          color: "#22c55e"
-                        }}
-                      >
-                        ₹{r.invested}
-                      </h3>
-
-                      <div>
-                        {r.confidence}% confidence
-                      </div>
-
-                    </div>
-
-                  </div>
-
-                  {/* TARGETS */}
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns:
-                        "repeat(4,1fr)",
-
-                      gap: 12,
-
-                      marginTop: 18
-                    }}
-                  >
-
-                    <div style={S.card}>
-                      <div>
-                        Buy Price
-                      </div>
-                      <h3>
-                        ₹{r.price}
-                      </h3>
-                    </div>
-
-                    <div style={S.card}>
-                      <div>
-                        Sell Target
-                      </div>
-                      <h3
-                        style={{
-                          color: "#22c55e"
-                        }}
-                      >
-                        ₹{r.target_price}
-                      </h3>
-                    </div>
-
-                    <div style={S.card}>
-                      <div>
-                        Stop Loss
-                      </div>
-                      <h3
-                        style={{
-                          color: "#ef4444"
-                        }}
-                      >
-                        ₹{r.stop_loss}
-                      </h3>
-                    </div>
-
-                    <div style={S.card}>
-                      <div>
-                        Expected Profit
-                      </div>
-                      <h3
-                        style={{
-                          color: "#38bdf8"
-                        }}
-                      >
-                        ₹{r.estimated_profit}
-                      </h3>
-                    </div>
-
-                  </div>
-
-                  {/* HOLD TYPE */}
-                  <div
-                    style={{
-                      marginTop: 16,
-                      display: "flex",
-                      justifyContent:
-                        "space-between"
-                    }}
-                  >
-
-                    <div
-                      style={{
-                        background:
-                          "#22c55e22",
-
-                        color:
-                          "#22c55e",
-
-                        padding:
-                          "6px 12px",
-
-                        borderRadius: 20,
-
-                        fontSize: 12,
-
-                        fontWeight: 700
-                      }}
-                    >
-                      {r.holding_type}
-                    </div>
-
-                    <div
-                      style={{
-                        color: "#94a3b8"
-                      }}
-                    >
-                      Sell near +{r.target_pct}%
-                    </div>
-
-                  </div>
-
+                  ₹{stock.target}
                 </div>
-              ))
-            }
+              </div>
 
+              <div>
+                <div style={styles.metricLabel}>Stop Loss</div>
+                <div
+                  style={{
+                    ...styles.metricValue,
+                    color: "#ef4444"
+                  }}
+                >
+                  ₹{stock.stoploss}
+                </div>
+              </div>
+
+              <div>
+                <div style={styles.metricLabel}>
+                  Expected Profit
+                </div>
+                <div
+                  style={{
+                    ...styles.metricValue,
+                    color: "#38bdf8"
+                  }}
+                >
+                  ₹{stock.expectedProfit}
+                </div>
+              </div>
+            </div>
           </div>
-        )
-      }
-
-      {/* FILTERS */}
-      <div
-        style={{
-          display: "flex",
-          gap: 12,
-          marginBottom: 20
-        }}
-      >
-
-        {
-          ["ALL", "BUY", "SELL"]
-          .map(f => (
-
-            <button
-
-              key={f}
-
-              onClick={() =>
-                setFilter(f)
-              }
-
-              style={{
-                ...S.button,
-
-                background:
-                  filter === f
-                  ? "#38bdf8"
-                  : "#1e293b",
-
-                color: "#fff"
-              }}
-            >
-              {f}
-            </button>
-          ))
-        }
-
-      </div>
-
-      {/* STOCK TABLE */}
-      <div style={S.card}>
-
-        <table
-          width="100%"
-          cellPadding="12"
-        >
-
-          <thead>
-
-            <tr
-              style={{
-                color: "#64748b"
-              }}
-            >
-
-              <th align="left">
-                Stock
-              </th>
-
-              <th align="left">
-                Price
-              </th>
-
-              <th align="left">
-                Signal
-              </th>
-
-              <th align="left">
-                Confidence
-              </th>
-
-              <th align="left">
-                AI Score
-              </th>
-
-            </tr>
-
-          </thead>
-
-          <tbody>
-
-            {
-              displayRows.map(
-                (item, i) => (
-
-                item._placeholder
-
-                ? (
-
-                  <tr key={i}>
-                    <td colSpan={5}>
-                      —
-                    </td>
-                  </tr>
-
-                )
-
-                : (
-
-                  <tr key={item.stock}>
-
-                    <td>
-                      {item.stock}
-                    </td>
-
-                    <td>
-                      ₹{item.price}
-                    </td>
-
-                    <td>
-                      <SignalBadge
-                        signal={item.signal}
-                      />
-                    </td>
-
-                    <td>
-                      {item.confidence}%
-                    </td>
-
-                    <td
-                      style={{
-                        color: "#38bdf8",
-                        fontWeight: 700
-                      }}
-                    >
-                      {item.ai_score}
-                    </td>
-
-                  </tr>
-                )
-              ))
-            }
-
-          </tbody>
-
-        </table>
-
-      </div>
-
+        ))
+      )}
     </div>
   );
 }
