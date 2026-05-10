@@ -8,33 +8,33 @@
 
   <style>
     :root {
-      --bg: #0a0b0f;
-      --card: rgba(255,255,255,0.06);
+      --bg: #0f0f12;
+      --card: rgba(30, 32, 40, 0.95);
       --accent: #00f0ff;
       --green: #00ff9d;
       --red: #ff3b5c;
     }
     body {
       background: var(--bg);
-      color: #f0f4ff;
+      color: #f0f2f5;
       font-family: 'Inter', sans-serif;
       margin: 0;
       padding: 0;
-      min-height: 100vh;
     }
+
     .glass {
       background: var(--card);
-      backdrop-filter: blur(20px);
-      border: 1px solid rgba(0,240,255,0.2);
       border-radius: 20px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      border: 1px solid rgba(0, 240, 255, 0.15);
     }
 
     header {
-      padding: 20px 16px;
+      padding: 18px 20px;
+      background: rgba(15,15,20,0.98);
       display: flex;
       justify-content: space-between;
       align-items: center;
-      background: rgba(10,11,15,0.95);
       position: sticky;
       top: 0;
       z-index: 100;
@@ -43,69 +43,74 @@
       font-family: 'Space Grotesk', sans-serif;
       font-size: 26px;
       font-weight: 600;
-      letter-spacing: -1px;
+      letter-spacing: -0.5px;
     }
 
-    .section { padding: 24px 16px; }
+    .section { padding: 24px 20px; }
+
     .title {
       font-size: 15px;
       font-weight: 600;
       color: var(--accent);
       margin-bottom: 16px;
-      text-transform: uppercase;
-      letter-spacing: 1px;
+      letter-spacing: 0.5px;
     }
 
     .top5-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
       gap: 16px;
     }
     .stock-card {
       padding: 20px;
       border-radius: 18px;
-      transition: 0.3s;
+      transition: all 0.3s ease;
     }
-    .stock-card:hover { transform: translateY(-6px); }
+    .stock-card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 15px 35px rgba(0, 240, 255, 0.2);
+    }
 
     .portfolio-engine {
       text-align: center;
-      padding: 32px 20px;
+      padding: 40px 20px;
     }
     .budget-input {
-      font-size: 36px;
+      font-size: 42px;
       font-weight: 500;
       background: transparent;
       border: none;
-      border-bottom: 2px solid var(--accent);
       color: white;
       text-align: center;
       width: 100%;
       max-width: 320px;
+      margin: 10px auto;
+      border-bottom: 3px solid var(--accent);
       outline: none;
     }
 
     .analyze-btn {
-      margin-top: 24px;
-      padding: 16px 40px;
+      margin-top: 25px;
+      padding: 16px 48px;
       background: linear-gradient(90deg, #00ff9d, #00d4ff);
       color: black;
       font-weight: 600;
       border: none;
-      border-radius: 999px;
+      border-radius: 9999px;
       font-size: 16px;
       cursor: pointer;
+      box-shadow: 0 8px 25px rgba(0, 255, 157, 0.3);
     }
 
     .portfolio-section {
       display: none;
-      padding: 20px 16px;
+      padding: 20px;
     }
     .portfolio-section.visible { display: block; }
 
     .port-row {
-      background: rgba(255,255,255,0.05);
-      padding: 16px;
+      background: rgba(40,42,55,0.6);
+      padding: 16px 20px;
       border-radius: 16px;
       margin-bottom: 12px;
     }
@@ -113,16 +118,19 @@
     table {
       width: 100%;
       border-collapse: collapse;
+      background: var(--card);
+      border-radius: 18px;
+      overflow: hidden;
     }
     th, td {
-      padding: 14px 10px;
+      padding: 16px 12px;
       text-align: left;
     }
-    th { color: var(--accent); font-size: 13px; }
+    th { background: #1a1c24; color: var(--accent); }
 
     footer {
       text-align: center;
-      padding: 30px 16px;
+      padding: 40px 20px 30px;
       color: #64748b;
       font-size: 13px;
     }
@@ -132,7 +140,7 @@
 
 <header>
   <div class="logo">N50 NEXUS</div>
-  <div style="color:#00ff9d; font-weight:500;">● LIVE</div>
+  <div style="color:#00ff9d">● LIVE</div>
 </header>
 
 <div class="section">
@@ -148,16 +156,15 @@
   </button>
 </div>
 
-<!-- Portfolio Results -->
 <div class="portfolio-section glass" id="portfolioSection">
   <div class="title">Recommended Portfolio</div>
-  <div id="portSummary" style="margin:20px 0; font-size:15px;"></div>
+  <div id="portSummary" style="margin:20px 0; font-size:16px; line-height:1.8;"></div>
   <div id="portfolioRows"></div>
 </div>
 
 <div class="section">
   <div class="title">Live Market Scan</div>
-  <div class="glass" style="overflow-x:auto; padding:4px;">
+  <div class="glass" style="overflow-x:auto">
     <table id="stocksTable">
       <thead>
         <tr>
