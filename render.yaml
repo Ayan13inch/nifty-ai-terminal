@@ -9,7 +9,7 @@ services:
         value: 3.11.0
 
   - type: web
-    name: n50-nexus-frontend-ui          # ← Updated name
+    name: n50-nexus-frontend-ui
     runtime: static
     buildCommand: ""
     staticPublishPath: .
@@ -20,6 +20,3 @@ services:
       - path: "*.js"
         name: Content-Type
         value: text/javascript
-      - path: "*.css"
-        name: Content-Type
-        value: text/css
