@@ -7,5 +7,12 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.0
-      - key: GUNICORN_CMD_ARGS
-        value: "--access-logfile - --bind=0.0.0.0:10000 --timeout 120"
+
+  - type: web
+    name: n50-nexus-frontend
+    runtime: static
+    staticPublishPath: .
+    headers:
+      - path: /*
+        name: Cache-Control
+        value: no-cache
