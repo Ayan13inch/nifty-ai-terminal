@@ -1,43 +1,865 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#000000" />
-    <meta
-      name="description"
-      content="Web site created using create-react-app"
-    />
-    <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
-    <!--
-      manifest.json provides metadata used when your web app is installed on a
-      user's mobile device or desktop. See https://developers.google.com/web/fundamentals/web-app-manifest/
-    -->
-    <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
-    <!--
-      Notice the use of %PUBLIC_URL% in the tags above.
-      It will be replaced with the URL of the `public` folder during the build.
-      Only files inside the `public` folder can be referenced from the HTML.
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>N50 NEXUS — Nifty 50 Live Intelligence</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Share+Tech+Mono&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet" />
 
-      Unlike "/favicon.ico" or "favicon.ico", "%PUBLIC_URL%/favicon.ico" will
-      work correctly both with client-side routing and a non-root public URL.
-      Learn how to configure a non-root public URL by running `npm run build`.
-    -->
-    <title>React App</title>
-  </head>
-  <body>
-    <noscript>You need to enable JavaScript to run this app.</noscript>
-    <div id="root"></div>
-    <!--
-      This HTML file is a template.
-      If you open it directly in the browser, you will see an empty page.
+  <style>
+    /* ── CSS Variables ──────────────────────────────────────── */
+    :root {
+      --bg:        #020508;
+      --bg2:       #060d12;
+      --bg3:       #0a1520;
+      --green:     #00ff88;
+      --green2:    #00cc66;
+      --cyan:      #00d4ff;
+      --cyan2:     #0099cc;
+      --red:       #ff3366;
+      --red2:      #cc2244;
+      --yellow:    #f0c040;
+      --text:      #c8dde8;
+      --text-dim:  #4a6878;
+      --border:    rgba(0,212,255,0.15);
+      --border2:   rgba(0,255,136,0.2);
+      --glow-g:    0 0 20px rgba(0,255,136,0.4);
+      --glow-c:    0 0 20px rgba(0,212,255,0.4);
+      --glow-r:    0 0 20px rgba(255,51,102,0.4);
+      --card-bg:   rgba(6,20,30,0.85);
+      --font-head: 'Orbitron', sans-serif;
+      --font-mono: 'Share Tech Mono', monospace;
+      --font-body: 'Rajdhani', sans-serif;
+    }
 
-      You can add webfonts, meta tags, or analytics to this file.
-      The build step will place the bundled scripts into the <body> tag.
+    /* ── Reset & Base ──────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
 
-      To begin the development, run `npm start` or `yarn start`.
-      To create a production bundle, use `npm run build` or `yarn build`.
-    -->
-  </body>
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 16px;
+      overflow-x: hidden;
+      min-height: 100vh;
+    }
+
+    /* ── Animated Grid Background ──────────────────────────── */
+    body::before {
+      content: '';
+      position: fixed; inset: 0; z-index: 0;
+      background-image:
+        linear-gradient(rgba(0,212,255,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,212,255,0.04) 1px, transparent 1px);
+      background-size: 60px 60px;
+      animation: gridShift 20s linear infinite;
+      pointer-events: none;
+    }
+    @keyframes gridShift {
+      0% { background-position: 0 0; }
+      100% { background-position: 60px 60px; }
+    }
+
+    /* Corner vignette */
+    body::after {
+      content: '';
+      position: fixed; inset: 0; z-index: 0;
+      background: radial-gradient(ellipse at center, transparent 40%, rgba(2,5,8,0.85) 100%);
+      pointer-events: none;
+    }
+
+    /* ── Scanline overlay ──────────────────────────────────── */
+    .scanlines {
+      position: fixed; inset: 0; z-index: 1;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0,0,0,0.07) 2px,
+        rgba(0,0,0,0.07) 4px
+      );
+      pointer-events: none;
+    }
+
+    /* ── Ticker Tape ───────────────────────────────────────── */
+    .ticker-wrap {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      height: 36px;
+      background: rgba(0,10,18,0.95);
+      border-bottom: 1px solid var(--cyan2);
+      display: flex; align-items: center;
+      overflow: hidden;
+    }
+    .ticker-label {
+      flex-shrink: 0;
+      background: var(--cyan);
+      color: #000;
+      font-family: var(--font-head);
+      font-size: 10px;
+      font-weight: 700;
+      padding: 0 14px;
+      height: 100%;
+      display: flex; align-items: center;
+      letter-spacing: 2px;
+      z-index: 2;
+    }
+    .ticker-track {
+      flex: 1;
+      overflow: hidden;
+      position: relative;
+    }
+    .ticker-inner {
+      display: flex; gap: 48px;
+      white-space: nowrap;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      animation: tickerScroll 60s linear infinite;
+      width: max-content;
+    }
+    @keyframes tickerScroll {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+    .tick-item { display: inline-flex; gap: 8px; }
+    .tick-sym { color: var(--cyan); font-weight: bold; }
+    .tick-price { color: var(--text); }
+    .tick-up { color: var(--green); }
+    .tick-down { color: var(--red); }
+
+    /* ── Main Layout ───────────────────────────────────────── */
+    .main-wrapper {
+      position: relative; z-index: 2;
+      padding-top: 36px;
+    }
+
+    /* ── Header ────────────────────────────────────────────── */
+    .header {
+      padding: 48px 60px 32px;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .logo-block { display: flex; flex-direction: column; gap: 4px; }
+    .logo-name {
+      font-family: var(--font-head);
+      font-size: 36px;
+      font-weight: 900;
+      letter-spacing: 8px;
+      color: var(--cyan);
+      text-shadow: 0 0 30px rgba(0,212,255,0.6), 0 0 60px rgba(0,212,255,0.3);
+      line-height: 1;
+    }
+    .logo-tag {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--green);
+      letter-spacing: 4px;
+    }
+    .header-meta {
+      display: flex; flex-direction: column; align-items: flex-end; gap: 6px;
+    }
+    .live-indicator {
+      display: flex; align-items: center; gap: 8px;
+      font-family: var(--font-mono); font-size: 12px; color: var(--green);
+    }
+    .live-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: var(--glow-g);
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.7); }
+    }
+    .market-time {
+      font-family: var(--font-mono); font-size: 11px; color: var(--text-dim);
+    }
+    .nse-status {
+      font-family: var(--font-mono); font-size: 10px;
+      padding: 4px 12px;
+      border: 1px solid var(--green2);
+      color: var(--green);
+      letter-spacing: 2px;
+    }
+
+    /* ── Section Containers ────────────────────────────────── */
+    .section { padding: 40px 60px; }
+    .section-header {
+      display: flex; align-items: baseline; justify-content: space-between;
+      margin-bottom: 28px;
+    }
+    .section-title {
+      font-family: var(--font-head);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 4px;
+      color: var(--cyan);
+    }
+    .section-title::before {
+      content: '▶ ';
+      font-size: 10px;
+      color: var(--green);
+    }
+    .section-sub {
+      font-family: var(--font-mono); font-size: 11px; color: var(--text-dim);
+    }
+
+    /* ── Top 5 Cards ───────────────────────────────────────── */
+    .top5-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 16px;
+    }
+    .stock-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      padding: 22px 20px;
+      position: relative;
+      cursor: pointer;
+      transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+      overflow: hidden;
+    }
+    .stock-card::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0;
+      height: 2px;
+      transition: opacity 0.3s;
+    }
+    .stock-card.bullish::before { background: linear-gradient(90deg, var(--green), transparent); }
+    .stock-card.bearish::before { background: linear-gradient(90deg, var(--red), transparent); }
+    .stock-card.neutral::before { background: linear-gradient(90deg, var(--yellow), transparent); }
+
+    .stock-card:hover {
+      transform: translateY(-4px);
+      border-color: var(--cyan2);
+      box-shadow: 0 12px 40px rgba(0,212,255,0.15);
+    }
+
+    .card-sym {
+      font-family: var(--font-head);
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--cyan);
+      letter-spacing: 2px;
+      margin-bottom: 4px;
+    }
+    .card-name {
+      font-size: 11px;
+      color: var(--text-dim);
+      margin-bottom: 14px;
+      line-height: 1.3;
+      min-height: 28px;
+    }
+    .card-price {
+      font-family: var(--font-mono);
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+    .card-change {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      margin-bottom: 16px;
+    }
+    .card-change.up { color: var(--green); }
+    .card-change.down { color: var(--red); }
+
+    .card-indicators {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+    .ind-block {
+      background: rgba(0,0,0,0.3);
+      padding: 7px 10px;
+      border-left: 2px solid var(--border2);
+    }
+    .ind-label {
+      font-family: var(--font-mono); font-size: 9px;
+      color: var(--text-dim); letter-spacing: 1px;
+      margin-bottom: 2px;
+    }
+    .ind-value {
+      font-family: var(--font-mono); font-size: 14px;
+      font-weight: bold;
+    }
+    .ind-value.ok { color: var(--cyan); }
+    .ind-value.good { color: var(--green); }
+    .ind-value.warn { color: var(--yellow); }
+    .ind-value.bad { color: var(--red); }
+
+    /* Sparkline */
+    .sparkline-wrap { height: 40px; margin-bottom: 14px; }
+    .sparkline-wrap canvas { width: 100%; height: 100%; }
+
+    /* Action Badge */
+    .action-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-family: var(--font-head);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      padding: 6px 14px;
+      border: 1px solid currentColor;
+      width: 100%;
+      justify-content: center;
+    }
+    .action-badge::before {
+      content: '';
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+      animation: pulse 1.5s infinite;
+    }
+
+    /* ── Budget Panel ──────────────────────────────────────── */
+    .budget-section {
+      background: linear-gradient(135deg, rgba(0,25,40,0.9), rgba(0,10,20,0.9));
+      border: 1px solid var(--border2);
+      border-left: 3px solid var(--green);
+      padding: 40px 60px;
+      position: relative;
+      overflow: hidden;
+    }
+    .budget-section::before {
+      content: 'PORTFOLIO ENGINE';
+      position: absolute; top: 20px; right: 40px;
+      font-family: var(--font-mono); font-size: 10px;
+      color: rgba(0,255,136,0.15); letter-spacing: 6px;
+    }
+    .budget-layout {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 48px; align-items: center;
+    }
+    .budget-input-group { display: flex; flex-direction: column; gap: 16px; }
+    .budget-label {
+      font-family: var(--font-head); font-size: 11px;
+      color: var(--green); letter-spacing: 4px;
+    }
+    .budget-input-wrap {
+      display: flex; align-items: center;
+      border: 1px solid var(--green2);
+      background: rgba(0,0,0,0.5);
+      padding: 0 20px;
+      transition: box-shadow 0.3s;
+    }
+    .budget-input-wrap:focus-within {
+      box-shadow: 0 0 30px rgba(0,255,136,0.25);
+      border-color: var(--green);
+    }
+    .budget-rupee {
+      font-family: var(--font-mono); font-size: 28px;
+      color: var(--green); padding-right: 12px;
+    }
+    .budget-input {
+      background: transparent; border: none; outline: none;
+      font-family: var(--font-mono); font-size: 28px;
+      color: var(--text); width: 100%; padding: 18px 0;
+    }
+    .budget-input::placeholder { color: var(--text-dim); }
+
+    .budget-presets { display: flex; gap: 10px; flex-wrap: wrap; }
+    .preset-btn {
+      font-family: var(--font-mono); font-size: 12px;
+      padding: 8px 16px;
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+      cursor: pointer;
+      transition: all 0.2s;
+      letter-spacing: 1px;
+    }
+    .preset-btn:hover {
+      border-color: var(--green);
+      color: var(--green);
+      background: rgba(0,255,136,0.08);
+    }
+
+    .analyze-btn {
+      font-family: var(--font-head); font-size: 13px;
+      font-weight: 700; letter-spacing: 4px;
+      padding: 18px 40px;
+      background: linear-gradient(135deg, var(--green), var(--cyan));
+      border: none; color: #000;
+      cursor: pointer;
+      width: 100%;
+      position: relative; overflow: hidden;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .analyze-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(0,255,136,0.4);
+    }
+    .analyze-btn:active { transform: translateY(0); }
+    .analyze-btn.loading {
+      pointer-events: none;
+      background: linear-gradient(135deg, #004422, #003344);
+      color: var(--green);
+    }
+
+    .budget-info-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    .info-tile {
+      background: rgba(0,0,0,0.4);
+      border: 1px solid var(--border);
+      padding: 18px;
+      display: flex; flex-direction: column; gap: 6px;
+    }
+    .info-tile-label {
+      font-family: var(--font-mono); font-size: 10px;
+      color: var(--text-dim); letter-spacing: 2px;
+    }
+    .info-tile-value {
+      font-family: var(--font-mono); font-size: 20px;
+      font-weight: bold;
+    }
+
+    /* ── Portfolio Results ─────────────────────────────────── */
+    .portfolio-section {
+      display: none;
+      padding: 0 60px 40px;
+    }
+    .portfolio-section.visible { display: block; }
+
+    .portfolio-header {
+      display: flex; justify-content: space-between;
+      align-items: center; margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .port-summary {
+      display: flex; gap: 32px;
+    }
+    .port-stat { display: flex; flex-direction: column; gap: 4px; }
+    .port-stat-label {
+      font-family: var(--font-mono); font-size: 10px;
+      color: var(--text-dim); letter-spacing: 2px;
+    }
+    .port-stat-value {
+      font-family: var(--font-mono); font-size: 18px; font-weight: bold;
+    }
+
+    .portfolio-rows { display: flex; flex-direction: column; gap: 12px; }
+
+    .port-row {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      padding: 20px 24px;
+      display: grid;
+      grid-template-columns: 160px 1fr 1fr 1fr 1fr 1fr auto;
+      gap: 16px; align-items: center;
+      border-left: 3px solid var(--green);
+      animation: slideIn 0.4s ease both;
+      transition: background 0.2s;
+    }
+    .port-row:hover { background: rgba(0,30,50,0.9); }
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(-20px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+    .port-row-sym {
+      display: flex; flex-direction: column; gap: 2px;
+    }
+    .port-row-sym-code {
+      font-family: var(--font-head); font-size: 14px;
+      color: var(--cyan); letter-spacing: 2px;
+    }
+    .port-row-sym-name {
+      font-size: 11px; color: var(--text-dim);
+    }
+    .port-col-label {
+      font-family: var(--font-mono); font-size: 9px;
+      color: var(--text-dim); letter-spacing: 2px; margin-bottom: 4px;
+    }
+    .port-col-value {
+      font-family: var(--font-mono); font-size: 15px; font-weight: bold;
+    }
+    .port-col-value.green { color: var(--green); }
+    .port-col-value.red { color: var(--red); }
+    .port-col-value.cyan { color: var(--cyan); }
+
+    .sell-when {
+      font-family: var(--font-mono); font-size: 10px;
+      color: var(--yellow);
+      line-height: 1.6;
+    }
+
+    /* ── Full Stock Table ──────────────────────────────────── */
+    .table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--border);
+    }
+    .stocks-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: var(--font-mono);
+      font-size: 13px;
+    }
+    .stocks-table th {
+      background: rgba(0,15,25,0.95);
+      padding: 12px 16px;
+      text-align: left;
+      font-family: var(--font-head);
+      font-size: 9px;
+      letter-spacing: 3px;
+      color: var(--cyan);
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+      cursor: pointer;
+      user-select: none;
+    }
+    .stocks-table th:hover { color: var(--green); }
+    .stocks-table td {
+      padding: 12px 16px;
+      border-bottom: 1px solid rgba(0,212,255,0.05);
+      white-space: nowrap;
+    }
+    .stocks-table tr:hover td { background: rgba(0,212,255,0.04); }
+    .stocks-table tr:last-child td { border-bottom: none; }
+
+    .rsi-bar {
+      display: flex; align-items: center; gap: 8px;
+    }
+    .rsi-track {
+      width: 60px; height: 4px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .rsi-fill {
+      height: 100%; border-radius: 2px;
+      transition: width 0.3s;
+    }
+
+    .mini-badge {
+      font-family: var(--font-head);
+      font-size: 8px; letter-spacing: 1px;
+      padding: 3px 8px;
+      border: 1px solid currentColor;
+    }
+
+    /* ── Loading State ─────────────────────────────────────── */
+    .loading-overlay {
+      display: none;
+      position: fixed; inset: 0; z-index: 999;
+      background: rgba(2,5,8,0.95);
+      align-items: center; justify-content: center;
+      flex-direction: column; gap: 24px;
+    }
+    .loading-overlay.visible { display: flex; }
+    .loading-text {
+      font-family: var(--font-head); font-size: 14px;
+      color: var(--cyan); letter-spacing: 6px;
+      animation: blink 1s step-end infinite;
+    }
+    @keyframes blink { 50% { opacity: 0.3; } }
+    .loading-bar-wrap {
+      width: 300px; height: 2px;
+      background: rgba(255,255,255,0.05);
+    }
+    .loading-bar {
+      height: 100%; background: linear-gradient(90deg, var(--green), var(--cyan));
+      animation: loadProgress 3s ease-in-out infinite;
+    }
+    @keyframes loadProgress {
+      0% { width: 0; }
+      70% { width: 90%; }
+      100% { width: 100%; }
+    }
+
+    /* ── Toast ─────────────────────────────────────────────── */
+    .toast {
+      position: fixed; bottom: 30px; right: 30px; z-index: 999;
+      background: rgba(0,20,35,0.97);
+      border: 1px solid var(--cyan);
+      padding: 16px 24px;
+      font-family: var(--font-mono); font-size: 13px;
+      color: var(--text);
+      transform: translateY(100px); opacity: 0;
+      transition: all 0.3s ease;
+      max-width: 360px;
+    }
+    .toast.show { transform: translateY(0); opacity: 1; }
+    .toast.error { border-color: var(--red); }
+
+    /* ── Tabs ──────────────────────────────────────────────── */
+    .tab-bar {
+      display: flex; gap: 0;
+      border-bottom: 1px solid var(--border);
+      padding: 0 60px;
+    }
+    .tab-btn {
+      font-family: var(--font-head); font-size: 10px;
+      letter-spacing: 3px; padding: 16px 28px;
+      background: transparent; border: none; border-bottom: 2px solid transparent;
+      color: var(--text-dim); cursor: pointer;
+      transition: all 0.2s;
+      margin-bottom: -1px;
+    }
+    .tab-btn:hover { color: var(--cyan); }
+    .tab-btn.active {
+      color: var(--cyan);
+      border-bottom-color: var(--cyan);
+      background: rgba(0,212,255,0.04);
+    }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* ── Scrollbar ─────────────────────────────────────────── */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--cyan2); }
+
+    /* ── Responsiveness ────────────────────────────────────── */
+    @media (max-width: 1200px) {
+      .top5-grid { grid-template-columns: repeat(3, 1fr); }
+      .header, .section, .budget-section, .portfolio-section, .tab-bar { padding-left: 30px; padding-right: 30px; }
+    }
+    @media (max-width: 768px) {
+      .top5-grid { grid-template-columns: 1fr 1fr; }
+      .budget-layout { grid-template-columns: 1fr; }
+      .port-row { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="scanlines"></div>
+
+<!-- ── Ticker Tape ── -->
+<div class="ticker-wrap">
+  <div class="ticker-label">NSE LIVE</div>
+  <div class="ticker-track">
+    <div class="ticker-inner" id="tickerInner">
+      <span class="tick-item"><span class="tick-sym">LOADING...</span></span>
+    </div>
+  </div>
+</div>
+
+<!-- ── Loading Overlay ── -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="loading-text">INITIALIZING MARKET FEED</div>
+  <div class="loading-bar-wrap"><div class="loading-bar"></div></div>
+</div>
+
+<!-- ── Toast ── -->
+<div class="toast" id="toast"></div>
+
+<!-- ── Main ── -->
+<div class="main-wrapper">
+
+  <!-- Header -->
+  <header class="header">
+    <div class="logo-block">
+      <div class="logo-name">N50 NEXUS</div>
+      <div class="logo-tag">NIFTY 50 LIVE INTELLIGENCE TERMINAL</div>
+    </div>
+    <div class="header-meta">
+      <div class="live-indicator">
+        <div class="live-dot"></div>
+        <span id="liveStatus">CONNECTING...</span>
+      </div>
+      <div class="market-time" id="marketTime">—</div>
+      <div class="nse-status" id="nseStatus">NSE • CHECKING</div>
+    </div>
+  </header>
+
+  <!-- Top 5 -->
+  <section class="section">
+    <div class="section-header">
+      <div class="section-title">TOP SIGNALS TODAY</div>
+      <div class="section-sub" id="lastUpdated">—</div>
+    </div>
+    <div class="top5-grid" id="top5Grid">
+      <!-- Injected by JS -->
+    </div>
+  </section>
+
+  <!-- Budget Engine -->
+  <div class="budget-section">
+    <div class="budget-layout">
+      <div class="budget-input-group">
+        <div class="budget-label">PORTFOLIO ENGINE — ENTER BUDGET</div>
+        <div class="budget-input-wrap">
+          <div class="budget-rupee">₹</div>
+          <input type="number" class="budget-input" id="budgetInput"
+            placeholder="50000" min="1000" max="100000000" />
+        </div>
+        <div class="budget-presets">
+          <button class="preset-btn" onclick="setPreset(10000)">₹10K</button>
+          <button class="preset-btn" onclick="setPreset(25000)">₹25K</button>
+          <button class="preset-btn" onclick="setPreset(50000)">₹50K</button>
+          <button class="preset-btn" onclick="setPreset(100000)">₹1L</button>
+          <button class="preset-btn" onclick="setPreset(500000)">₹5L</button>
+          <button class="preset-btn" onclick="setPreset(1000000)">₹10L</button>
+        </div>
+        <button class="analyze-btn" id="analyzeBtn" onclick="runAnalysis()">
+          ANALYZE &amp; BUILD PORTFOLIO
+        </button>
+      </div>
+
+      <div class="budget-info-grid" id="budgetInfoGrid">
+        <div class="info-tile">
+          <div class="info-tile-label">STRATEGY</div>
+          <div class="info-tile-value" style="color:var(--green);font-size:14px">RSI + MACD + BB</div>
+        </div>
+        <div class="info-tile">
+          <div class="info-tile-label">UNIVERSE</div>
+          <div class="info-tile-value" style="color:var(--cyan)">NIFTY 50</div>
+        </div>
+        <div class="info-tile">
+          <div class="info-tile-label">MAX ALLOCATION</div>
+          <div class="info-tile-value" style="color:var(--yellow)">35% / STOCK</div>
+        </div>
+        <div class="info-tile">
+          <div class="info-tile-label">MAX POSITIONS</div>
+          <div class="info-tile-value" style="color:var(--cyan)">5 STOCKS</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Portfolio Results -->
+  <div class="portfolio-section" id="portfolioSection">
+    <div style="padding-top:32px">
+      <div class="portfolio-header">
+        <div class="section-title">RECOMMENDED PORTFOLIO</div>
+        <div class="port-summary" id="portSummary"></div>
+      </div>
+      <div class="portfolio-rows" id="portfolioRows"></div>
+    </div>
+  </div>
+
+  <!-- Tabs: All Stocks / Screener -->
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="switchTab('allStocks')">ALL NIFTY 50</button>
+    <button class="tab-btn" onclick="switchTab('screener')">SCREENER</button>
+  </div>
+
+  <div class="tab-panel active" id="tab-allStocks">
+    <div class="section">
+      <div class="section-header">
+        <div class="section-title">NIFTY 50 LIVE SCAN</div>
+        <div style="display:flex;gap:12px;align-items:center">
+          <input type="text" id="searchInput" placeholder="Search symbol or name..."
+            style="background:rgba(0,0,0,0.5);border:1px solid var(--border);
+                   padding:8px 16px;color:var(--text);font-family:var(--font-mono);
+                   font-size:12px;outline:none;width:220px;"
+            oninput="filterTable()" />
+          <select id="filterAction" onchange="filterTable()"
+            style="background:rgba(0,0,0,0.5);border:1px solid var(--border);
+                   padding:8px 12px;color:var(--cyan);font-family:var(--font-mono);
+                   font-size:11px;outline:none;">
+            <option value="">ALL SIGNALS</option>
+            <option value="STRONG BUY">STRONG BUY</option>
+            <option value="BUY">BUY</option>
+            <option value="HOLD">HOLD</option>
+            <option value="SELL">SELL</option>
+            <option value="STRONG SELL">STRONG SELL</option>
+          </select>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table class="stocks-table" id="stocksTable">
+          <thead>
+            <tr>
+              <th onclick="sortTable('symbol')">SYMBOL</th>
+              <th onclick="sortTable('price')">LTP (₹)</th>
+              <th onclick="sortTable('change_pct')">CHANGE %</th>
+              <th onclick="sortTable('rsi')">RSI (14)</th>
+              <th>MACD</th>
+              <th>BOLLINGER</th>
+              <th onclick="sortTable('volume_signal')">VOLUME</th>
+              <th onclick="sortTable('score')">SCORE</th>
+              <th>SIGNAL</th>
+              <th>TARGET</th>
+              <th>STOP-LOSS</th>
+            </tr>
+          </thead>
+          <tbody id="stocksTbody">
+            <tr><td colspan="11" style="text-align:center;padding:40px;color:var(--text-dim);font-family:var(--font-mono)">
+              LOADING MARKET DATA...
+            </td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="tab-panel" id="tab-screener">
+    <div class="section">
+      <div class="section-header">
+        <div class="section-title">INTELLIGENT SCREENER</div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:28px">
+        <div>
+          <div class="port-col-label">RSI RANGE</div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <input type="number" id="rsiMin" value="0" min="0" max="100"
+              style="width:60px;background:rgba(0,0,0,0.5);border:1px solid var(--border);
+                     padding:8px;color:var(--text);font-family:var(--font-mono);font-size:13px;outline:none;" />
+            <span style="color:var(--text-dim)">—</span>
+            <input type="number" id="rsiMax" value="100" min="0" max="100"
+              style="width:60px;background:rgba(0,0,0,0.5);border:1px solid var(--border);
+                     padding:8px;color:var(--text);font-family:var(--font-mono);font-size:13px;outline:none;" />
+          </div>
+        </div>
+        <div>
+          <div class="port-col-label">MIN SCORE</div>
+          <input type="number" id="minScore" value="-100" min="-100" max="100"
+            style="width:80px;background:rgba(0,0,0,0.5);border:1px solid var(--border);
+                   padding:8px;color:var(--text);font-family:var(--font-mono);font-size:13px;outline:none;" />
+        </div>
+        <div>
+          <div class="port-col-label">MAX PRICE (₹)</div>
+          <input type="number" id="maxPrice" placeholder="Any"
+            style="width:120px;background:rgba(0,0,0,0.5);border:1px solid var(--border);
+                   padding:8px;color:var(--text);font-family:var(--font-mono);font-size:13px;outline:none;" />
+        </div>
+        <div style="display:flex;align-items:flex-end">
+          <button onclick="runScreener()"
+            style="font-family:var(--font-head);font-size:10px;letter-spacing:3px;
+                   padding:10px 24px;background:linear-gradient(135deg,var(--cyan),var(--cyan2));
+                   border:none;color:#000;cursor:pointer;font-weight:700;">
+            RUN SCREENER
+          </button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table class="stocks-table" id="screenerTable">
+          <thead>
+            <tr>
+              <th>SYMBOL</th><th>NAME</th><th>LTP (₹)</th><th>CHANGE %</th>
+              <th>RSI</th><th>SCORE</th><th>SIGNAL</th><th>TARGET</th><th>STOP-LOSS</th>
+            </tr>
+          </thead>
+          <tbody id="screenerTbody">
+            <tr><td colspan="9" style="text-align:center;padding:40px;color:var(--text-dim)">
+              Set filters above and click RUN SCREENER
+            </td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <footer style="padding:24px 60px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+    <div style="font-family:var(--font-mono);font-size:11px;color:var(--text-dim)">
+      ⚠ FOR EDUCATIONAL PURPOSES ONLY. NOT FINANCIAL ADVICE. CONSULT A SEBI-REGISTERED ADVISOR.
+    </div>
+    <div style="font-family:var(--font-mono);font-size:11px;color:var(--text-dim)">
+      DATA VIA YAHOO FINANCE · REFRESHES EVERY 5 MIN
+    </div>
+  </footer>
+</div>
+
+<script src="app.js"></script>
+</body>
 </html>
