@@ -1,7 +1,6 @@
---only-binary=:all:
-flask==3.0.3
-flask-cors==4.0.1
-yfinance==0.2.36
-pandas==2.0.3
-numpy==1.24.4
-gunicorn==21.2.0
+flask
+flask-cors
+yfinance
+pandas==2.3.3
+numpy
+gunicorn
