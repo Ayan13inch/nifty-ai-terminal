@@ -11,8 +11,15 @@ services:
   - type: web
     name: n50-nexus-frontend
     runtime: static
+    buildCommand: ""
     staticPublishPath: .
     headers:
       - path: /*
         name: Cache-Control
         value: no-cache
+      - path: "*.js"
+        name: Content-Type
+        value: text/javascript
+      - path: "*.css"
+        name: Content-Type
+        value: text/css
