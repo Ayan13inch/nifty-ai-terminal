@@ -2,7 +2,7 @@ const API_BASE = "https://n50-nexus-api.onrender.com";
 
 let allStocks = [];
 
-// Utility
+// Utility Functions
 function formatNumber(num) {
     return num.toLocaleString('en-IN');
 }
@@ -15,19 +15,23 @@ function showToast(message, isError = false) {
     setTimeout(() => toast.classList.remove('show'), 4000);
 }
 
-// Load Top 5
+// Load Top 5 Signals
 async function loadTop5() {
     try {
         const res = await fetch(API_BASE + "/api/top5");
         const data = await res.json();
+        
         if (data.error) throw new Error(data.error);
 
         const grid = document.getElementById('top5Grid');
         grid.innerHTML = '';
 
         data.data.forEach(stock => {
+            const isBullish = stock.score >= 15;
+            const isBearish = stock.score <= -15;
+            
             const card = document.createElement('div');
-            card.className = `stock-card ${stock.score >= 15 ? 'bullish' : stock.score <= -15 ? 'bearish' : 'neutral'}`;
+            card.className = `stock-card ${isBullish ? 'bullish' : isBearish ? 'bearish' : 'neutral'}`;
             card.innerHTML = `
                 <div class="card-sym">${stock.symbol}</div>
                 <div class="card-name">${stock.name}</div>
@@ -42,24 +46,25 @@ async function loadTop5() {
 
         document.getElementById('lastUpdated').textContent = 
             `Last updated: ${new Date(data.last_updated).toLocaleTimeString()}`;
+            
     } catch (e) {
         console.error(e);
         showToast("Failed to load top signals", true);
     }
 }
 
-// Load All Stocks Table
+// Load All Stocks
 async function loadAllStocks() {
     try {
         const res = await fetch(API_BASE + "/api/all");
         const data = await res.json();
         if (data.error) throw new Error(data.error);
 
-        allStocks = data.data;
+        allStocks = data.data || [];
         renderTable(allStocks);
     } catch (e) {
         console.error(e);
-        showToast("Failed to load stock data", true);
+        showToast("Failed to load market data", true);
     }
 }
 
@@ -86,14 +91,15 @@ function renderTable(stocks) {
     });
 }
 
-// Filter & Search
+// Filter Table
 function filterTable() {
-    const search = document.getElementById('searchInput').value.toLowerCase();
+    const search = document.getElementById('searchInput').value.toLowerCase().trim();
     const actionFilter = document.getElementById('filterAction').value;
 
-    let filtered = allStocks.filter(stock => {
-        const matchesSearch = stock.symbol.toLowerCase().includes(search) || 
-                            stock.name.toLowerCase().includes(search);
+    const filtered = allStocks.filter(stock => {
+        const matchesSearch = !search || 
+            stock.symbol.toLowerCase().includes(search) || 
+            stock.name.toLowerCase().includes(search);
         const matchesAction = !actionFilter || stock.action === actionFilter;
         return matchesSearch && matchesAction;
     });
@@ -103,10 +109,12 @@ function filterTable() {
 
 // Portfolio Analysis
 async function runAnalysis() {
-    const budget = parseFloat(document.getElementById('budgetInput').value) || 50000;
+    const budgetInput = document.getElementById('budgetInput');
+    const budget = parseFloat(budgetInput.value) || 50000;
     const btn = document.getElementById('analyzeBtn');
+
     btn.classList.add('loading');
-    btn.textContent = "ANALYZING...";
+    btn.textContent = "BUILDING PORTFOLIO...";
 
     try {
         const res = await fetch(API_BASE + "/api/recommendations", {
@@ -114,20 +122,18 @@ async function runAnalysis() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ budget })
         });
-        const data = await res.json();
 
+        const data = await res.json();
         if (data.error) throw new Error(data.error);
 
-        // Render portfolio (you can expand this)
-        console.log("Portfolio:", data);
-        showToast(`Portfolio ready! ₹${data.total_invested} invested`);
+        showToast(`Portfolio Ready! ₹${data.total_invested} invested in ${data.portfolio.length} stocks`);
 
-        // Basic display
-        document.getElementById('portfolioSection').classList.add('visible');
-        // You can expand this section further as needed
+        // You can expand this later to show full portfolio UI
+        console.log("Recommended Portfolio:", data);
 
     } catch (e) {
-        showToast("Analysis failed", true);
+        console.error(e);
+        showToast("Failed to generate portfolio", true);
     } finally {
         btn.classList.remove('loading');
         btn.textContent = "ANALYZE & BUILD PORTFOLIO";
@@ -138,10 +144,9 @@ function setPreset(amount) {
     document.getElementById('budgetInput').value = amount;
 }
 
-// Tab Switching
 function switchTab(tab) {
-    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-    document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
 
     if (tab === 'allStocks') {
         document.querySelector('button[onclick="switchTab(\'allStocks\')"]').classList.add('active');
@@ -152,16 +157,16 @@ function switchTab(tab) {
     }
 }
 
-// Init
+// Initialize App
 document.addEventListener('DOMContentLoaded', () => {
     loadTop5();
     loadAllStocks();
 
-    // Refresh every 5 minutes
+    // Auto refresh every 5 minutes
     setInterval(() => {
         loadTop5();
         loadAllStocks();
     }, 300000);
 
-    showToast("Connected to N50 Nexus");
+    showToast("✅ Connected to N50 Nexus Live");
 });
