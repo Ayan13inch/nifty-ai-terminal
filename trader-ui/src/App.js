@@ -12,31 +12,38 @@ export default function App() {
 
   const [loading, setLoading] = useState(false);
 
+  const [error, setError] = useState("");
+
   const fetchRecommendations = async () => {
 
     try {
 
       setLoading(true);
 
+      setError("");
+
       const res = await axios.get(
         `${BACKEND_URL}/recommend/${amount}`
       );
 
-      console.log(res.data);
+      console.log("API RESPONSE:", res.data);
 
-      setData(res.data);
+      setData(res.data || {});
 
     } catch (err) {
 
       console.log(err);
 
-      alert("Backend fetch failed");
+      setError("Backend fetch failed");
 
     } finally {
 
       setLoading(false);
     }
   };
+
+  const recommendations =
+    data?.recommendations || [];
 
   return (
 
@@ -73,7 +80,6 @@ export default function App() {
           onChange={(e) =>
             setAmount(e.target.value)
           }
-          placeholder="Enter Amount"
           style={{
             padding: 18,
             fontSize: 20,
@@ -103,6 +109,21 @@ export default function App() {
         </button>
       </div>
 
+      {error && (
+
+        <div
+          style={{
+            background: "#450a0a",
+            padding: 20,
+            borderRadius: 12,
+            marginBottom: 20,
+            color: "#fca5a5"
+          }}
+        >
+          {error}
+        </div>
+      )}
+
       {data && (
 
         <div>
@@ -111,76 +132,47 @@ export default function App() {
             style={{
               display: "grid",
               gridTemplateColumns:
-                "repeat(3,1fr)",
+                "repeat(auto-fit,minmax(250px,1fr))",
               gap: 20,
               marginBottom: 30
             }}
           >
 
-            <div
-              style={{
-                background: "#071226",
-                padding: 20,
-                borderRadius: 16
-              }}
-            >
-              <div>Total Capital</div>
+            <Card
+              title="Total Capital"
+              value={`₹${data.capital || 0}`}
+            />
 
-              <h1>
-                ₹{data.capital}
-              </h1>
-            </div>
+            <Card
+              title="Total Invested"
+              value={`₹${data.total_invested || 0}`}
+              color="#22c55e"
+            />
 
-            <div
-              style={{
-                background: "#071226",
-                padding: 20,
-                borderRadius: 16
-              }}
-            >
-              <div>Total Invested</div>
+            <Card
+              title="Residual Amount"
+              value={`₹${data.remaining || 0}`}
+              color="#f59e0b"
+            />
 
-              <h1
-                style={{
-                  color: "#22c55e"
-                }}
-              >
-                ₹{data.total_invested}
-              </h1>
-            </div>
-
-            <div
-              style={{
-                background: "#071226",
-                padding: 20,
-                borderRadius: 16
-              }}
-            >
-              <div>Residual Amount</div>
-
-              <h1
-                style={{
-                  color: "#f59e0b"
-                }}
-              >
-                ₹{data.remaining}
-              </h1>
-            </div>
           </div>
 
-          {data.recommendations.length === 0 ? (
+          {recommendations.length === 0 ? (
 
             <div
               style={{
-                fontSize: 24
+                background: "#071226",
+                padding: 30,
+                borderRadius: 16,
+                fontSize: 22
               }}
             >
-              No BUY opportunities right now
+              No BUY opportunities found currently.
             </div>
 
           ) : (
 
-            data.recommendations.map(
+            recommendations.map(
               (stock, index) => (
 
                 <div
@@ -212,7 +204,7 @@ export default function App() {
                     }}
                   >
                     BUY • Confidence{" "}
-                    {stock.confidence}%
+                    {stock.confidence || 0}%
                   </div>
 
                   <div
@@ -226,34 +218,34 @@ export default function App() {
 
                     <Metric
                       label="Current Price"
-                      value={`₹${stock.price}`}
+                      value={`₹${stock.price || 0}`}
                     />
 
                     <Metric
                       label="Quantity"
-                      value={stock.qty}
+                      value={stock.qty || 0}
                     />
 
                     <Metric
                       label="Invested"
-                      value={`₹${stock.invested}`}
+                      value={`₹${stock.invested || 0}`}
                     />
 
                     <Metric
                       label="Target"
-                      value={`₹${stock.target_price}`}
+                      value={`₹${stock.target_price || 0}`}
                       color="#22c55e"
                     />
 
                     <Metric
                       label="Stop Loss"
-                      value={`₹${stock.stop_loss}`}
+                      value={`₹${stock.stop_loss || 0}`}
                       color="#ef4444"
                     />
 
                     <Metric
                       label="Expected Profit"
-                      value={`₹${stock.estimated_profit}`}
+                      value={`₹${stock.estimated_profit || 0}`}
                       color="#38bdf8"
                     />
 
@@ -264,6 +256,45 @@ export default function App() {
           )}
         </div>
       )}
+    </div>
+  );
+}
+
+function Card({
+  title,
+  value,
+  color = "white"
+}) {
+
+  return (
+
+    <div
+      style={{
+        background: "#071226",
+        padding: 20,
+        borderRadius: 16
+      }}
+    >
+
+      <div
+        style={{
+          color: "#94a3b8",
+          marginBottom: 10
+        }}
+      >
+        {title}
+      </div>
+
+      <div
+        style={{
+          fontSize: 34,
+          fontWeight: "bold",
+          color
+        }}
+      >
+        {value}
+      </div>
+
     </div>
   );
 }
@@ -296,6 +327,7 @@ function Metric({
       >
         {value}
       </div>
+
     </div>
   );
 }
