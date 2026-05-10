@@ -4,7 +4,11 @@ let allStocks = [];
 
 console.log("🚀 N50 Nexus Frontend Loaded");
 
-// Utility
+// Utility Functions
+function formatNumber(num) {
+    return num.toLocaleString('en-IN');
+}
+
 function showToast(message, isError = false) {
     const toast = document.getElementById('toast');
     if (toast) {
@@ -15,10 +19,9 @@ function showToast(message, isError = false) {
     }
 }
 
-// Load Top 5
+// Load Top 5 Signals
 async function loadTop5() {
     try {
-        console.log("Fetching top 5...");
         const res = await fetch(API_BASE + "/api/top5");
         const data = await res.json();
         
@@ -44,26 +47,21 @@ async function loadTop5() {
 
         const lastUpdated = document.getElementById('lastUpdated');
         if (lastUpdated) lastUpdated.textContent = `Last updated: ${new Date(data.last_updated).toLocaleTimeString()}`;
-
-        console.log("✅ Top 5 loaded successfully");
     } catch (e) {
         console.error("Top5 Error:", e);
         showToast("Failed to load top signals", true);
     }
 }
 
-// Load All Stocks
+// Load All Stocks Table
 async function loadAllStocks() {
     try {
-        console.log("Fetching all stocks...");
         const res = await fetch(API_BASE + "/api/all");
         const data = await res.json();
-        
         if (data.error) throw new Error(data.error);
 
         allStocks = data.data || [];
         renderTable(allStocks);
-        console.log(`✅ Loaded ${allStocks.length} stocks`);
     } catch (e) {
         console.error("All Stocks Error:", e);
         showToast("Failed to load market data", true);
@@ -94,6 +92,7 @@ function renderTable(stocks) {
     });
 }
 
+// Filter Table
 function filterTable() {
     const search = document.getElementById('searchInput').value.toLowerCase().trim();
     const actionFilter = document.getElementById('filterAction').value;
@@ -109,11 +108,13 @@ function filterTable() {
     renderTable(filtered);
 }
 
+// === PORTFOLIO ANALYSIS ===
 async function runAnalysis() {
     const budget = parseFloat(document.getElementById('budgetInput').value) || 50000;
     const btn = document.getElementById('analyzeBtn');
+    const portfolioSection = document.getElementById('portfolioSection');
     
-    btn.textContent = "BUILDING...";
+    btn.textContent = "BUILDING PORTFOLIO...";
     btn.disabled = true;
 
     try {
@@ -125,9 +126,68 @@ async function runAnalysis() {
         const data = await res.json();
 
         if (data.error) throw new Error(data.error);
-        
-        showToast(`✅ Portfolio Ready! ₹${data.total_invested} invested`);
-        console.log("Portfolio:", data);
+
+        // Show portfolio section
+        portfolioSection.classList.add('visible');
+
+        // Render Summary
+        document.getElementById('portSummary').innerHTML = `
+            <div class="port-stat">
+                <div class="port-stat-label">TOTAL INVESTED</div>
+                <div class="port-stat-value" style="color:var(--green)">₹${formatNumber(data.total_invested)}</div>
+            </div>
+            <div class="port-stat">
+                <div class="port-stat-label">POTENTIAL GAIN</div>
+                <div class="port-stat-value" style="color:var(--green)">₹${formatNumber(data.total_potential_gain)}</div>
+            </div>
+            <div class="port-stat">
+                <div class="port-stat-label">TOTAL RISK</div>
+                <div class="port-stat-value" style="color:var(--yellow)">₹${formatNumber(data.total_risk)}</div>
+            </div>
+        `;
+
+        // Render Portfolio Rows
+        const rowsContainer = document.getElementById('portfolioRows');
+        rowsContainer.innerHTML = '';
+
+        data.portfolio.forEach(stock => {
+            const row = document.createElement('div');
+            row.className = 'port-row';
+            row.innerHTML = `
+                <div class="port-row-sym">
+                    <div class="port-row-sym-code">${stock.symbol}</div>
+                    <div class="port-row-sym-name">${stock.name}</div>
+                </div>
+                <div>
+                    <div class="port-col-label">QTY</div>
+                    <div class="port-col-value">${stock.qty}</div>
+                </div>
+                <div>
+                    <div class="port-col-label">PRICE</div>
+                    <div class="port-col-value">₹${stock.price}</div>
+                </div>
+                <div>
+                    <div class="port-col-label">INVESTED</div>
+                    <div class="port-col-value">₹${stock.cost}</div>
+                </div>
+                <div>
+                    <div class="port-col-label">TARGET</div>
+                    <div class="port-col-value green">₹${stock.target}</div>
+                </div>
+                <div>
+                    <div class="port-col-label">STOP LOSS</div>
+                    <div class="port-col-value red">₹${stock.stop_loss}</div>
+                </div>
+                <div style="text-align:right">
+                    <div class="port-col-label">ALLOCATION</div>
+                    <div class="port-col-value cyan">${stock.allocation_pct}%</div>
+                </div>
+            `;
+            rowsContainer.appendChild(row);
+        });
+
+        showToast(`✅ Portfolio Ready! ₹${data.total_invested} invested in ${data.portfolio.length} stocks`);
+
     } catch (e) {
         console.error(e);
         showToast("Failed to generate portfolio", true);
@@ -154,16 +214,18 @@ function switchTab(tab) {
     }
 }
 
-// Initialize
+// Initialize App
 document.addEventListener('DOMContentLoaded', () => {
     console.log("📡 Initializing N50 Nexus...");
+    
     loadTop5();
     loadAllStocks();
 
+    // Auto refresh every 5 minutes
     setInterval(() => {
         loadTop5();
         loadAllStocks();
     }, 300000);
 
-    showToast("✅ Connected to N50 Nexus");
+    showToast("✅ Connected to N50 Nexus Live");
 });
