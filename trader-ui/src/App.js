@@ -3,7 +3,7 @@
  * Connects to Flask backend at localhost:5000
  */
 
-const API = "http://localhost:5000/api";
+const API = "https://n50-nexus-api.onrender.com/api";
 let allStocksData = [];
 let sortState = { key: "score", asc: false };
 
